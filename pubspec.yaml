@@ -27,6 +27,8 @@ dependencies:
   path_provider:
   path:
   file_picker: ^1.4.0
+  esys_flutter_share:
+  transparent_image:
 
 dev_dependencies:
   flutter_test:
