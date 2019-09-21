@@ -120,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: EdgeInsets.all(20),
           children: <Widget>[
             RaisedButton(
-              child: Text("Pick image"),
+              child: Text("Bild auswählen"),
               onPressed: () async {
                 setState(() {
                   imageStatus = FileStatus.LOADING;
@@ -151,11 +151,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     // ]),
                   )
                 : Text(imageStatus == FileStatus.LOADING
-                    ? "Loading..."
-                    : "No image selected"),
+                    ? "Wird geladen..."
+                    : "Kein Bild ausgewählt"),
             Divider(),
             RaisedButton(
-              child: Text("Pick audio"),
+              child: Text("Audio auswählen"),
               onPressed: () async {
                 _AudioItemState.maybeShutUp();
                 setState(() {
@@ -178,11 +178,11 @@ class _MyHomePageState extends State<MyHomePage> {
             audioStatus == FileStatus.FINISHED
                 ? AudioItem(file: audio)
                 : Text(audioStatus == FileStatus.LOADING
-                    ? "Loading..."
-                    : "No audio selected"),
+                    ? "Wird geladen..."
+                    : "Keine Datei ausgewählt"),
             Divider(),
             RaisedButton(
-              child: Text("Make video"),
+              child: Text("In Video konvertieren"),
               onPressed: (audioStatus != FileStatus.FINISHED ||
                       imageStatus != FileStatus.FINISHED)
                   ? null
@@ -216,7 +216,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     return false;
                                   },
                                   child: AlertDialog(
-                                    title: Text("Making video..."),
+                                    title: Text("Konvertiere in Video..."),
                                     content: Center(
                                       heightFactor: 1.0,
                                       child: Column(
@@ -231,7 +231,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     ),
                                     actions: <Widget>[
                                       FlatButton(
-                                        child: Text("Cancel"),
+                                        child: Text("Abbrechen"),
                                         onPressed: () {
                                           _flutterFFmpeg.cancel();
                                         },
@@ -252,7 +252,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   Expanded(child: Text(path.basename(f.path))),
                                   IconButton(
                                     icon: Icon(Icons.share),
-                                    tooltip: "Share",
+                                    tooltip: "Teilen",
                                     onPressed: () async {
                                       var bytes = await f.readAsBytes();
                                       var title = path.basename(f.path);
@@ -262,10 +262,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                   IconButton(
                                     icon: Icon(Icons.delete),
-                                    tooltip: "Delete",
+                                    tooltip: "Löschen",
                                     onPressed: () async {
                                       await f.delete();
-                                      print("Deleted!");
                                       reloadFiles();
                                     },
                                   )
