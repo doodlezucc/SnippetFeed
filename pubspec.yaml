@@ -29,6 +29,7 @@ dependencies:
   file_picker: ^1.4.0
   esys_flutter_share:
   transparent_image:
+  flutter_sound:
 
 dev_dependencies:
   flutter_test:

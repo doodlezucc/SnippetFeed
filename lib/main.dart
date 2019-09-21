@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -35,6 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
   File image;
   File audio;
   Directory appDir;
+  int durationInMs;
 
   @override
   void initState() {
@@ -46,14 +49,9 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void doSthGoshDarnIt() async {
-    var dir = await getApplicationDocumentsDirectory();
-    makeVideo(image.path, audio.path,
-        join(dir.path, "${DateTime.now().millisecondsSinceEpoch}.mp4"));
-  }
-
   // combines an image and an audio file into a video running at 1 fps. cool.
-  void makeVideo(String img, String audio, String output) async {
+  Future<bool> makeVideo(String img, String audio, String output,
+      void Function(double progress) progressCb) async {
     print(img);
     print(audio);
     print(output);
@@ -67,16 +65,32 @@ class _MyHomePageState extends State<MyHomePage> {
       "-shortest", // plz don't use the endless loop of a single image to figure out the vid length, doofus.
       "$output" // output file
     ];
-    _flutterFFmpeg.enableStatisticsCallback(statisticsCallback);
+    bool initialized = false;
+    _flutterFFmpeg.enableStatisticsCallback((int time,
+        int size,
+        double bitrate,
+        double speed,
+        int videoFrameNumber,
+        double videoQuality,
+        double videoFps) {
+      if (initialized) {
+        progressCb(math.min(1, time.toDouble() / durationInMs.toDouble()));
+      } else {
+        initialized = true;
+      }
+    });
     int rc = await _flutterFFmpeg.executeWithArguments(arguments);
     print("FFmpeg process exited with rc $rc");
     setState(() {});
+    return rc == 0;
   }
 
-  void statisticsCallback(int time, int size, double bitrate, double speed,
-      int videoFrameNumber, double videoQuality, double videoFps) {
-    print("jawrush");
-    //print("Statistics: time: $time, size: $size, bitrate: $bitrate, speed: $speed, videoFrameNumber: $videoFrameNumber, videoQuality: $videoQuality, videoFps: $videoFps");
+  void retrieveDuration() async {
+    Map<dynamic, dynamic> info =
+        await _flutterFFmpeg.getMediaInformation(audio.path);
+    int duration = info["duration"];
+    print(duration);
+    durationInMs = duration;
   }
 
   @override
@@ -93,7 +107,9 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () async {
                 String path =
                     await FilePicker.getFilePath(type: FileType.IMAGE);
-                image = File(path);
+                setState(() {
+                  image = File(path);
+                });
               },
             ),
             image != null
@@ -104,28 +120,84 @@ class _MyHomePageState extends State<MyHomePage> {
                       placeholder: MemoryImage(kTransparentImage),
                       fit: BoxFit.cover,
                     ),
-                    decoration: BoxDecoration(boxShadow: [
-                      BoxShadow(blurRadius: 10, color: Colors.black38)
-                    ]),
+                    // decoration: BoxDecoration(boxShadow: [
+                    //   BoxShadow(blurRadius: 10, color: Colors.black38)
+                    // ]),
                   )
                 : Text("No image selected"),
             Divider(),
             RaisedButton(
               child: Text("Pick audio"),
               onPressed: () async {
+                _AudioItemState.maybeShutUp();
                 String path =
                     await FilePicker.getFilePath(type: FileType.AUDIO);
-                setState(() {
-                  audio = File(path);
-                });
+                if (path != null) {
+                  setState(() {
+                    audio = File(path);
+                    retrieveDuration();
+                  });
+                }
               },
             ),
-            audio != null ? Text("yes") : Text("No audio selected"),
+            audio != null ? AudioItem(file: audio) : Text("No audio selected"),
             Divider(),
             RaisedButton(
               child: Text("Make video"),
               onPressed: () {
-                doSthGoshDarnIt();
+                var setInnerState;
+                bool done = false;
+                double progress = 0;
+                makeVideo(
+                    image.path,
+                    audio.path,
+                    join(appDir.path,
+                        "${DateTime.now().millisecondsSinceEpoch}.mp4"), (p) {
+                  setInnerState(() {
+                    progress = p;
+                  });
+                }).then((v) {
+                  setInnerState(() {
+                    done = true;
+                  });
+                });
+
+                showDialog(
+                    context: context,
+                    builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) {
+                          setInnerState = setSt;
+                          return AlertDialog(
+                            title: Text("Making video..."),
+                            content: Center(
+                              heightFactor: 1.0,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Text("${(progress * 100).round()}%"),
+                                  LinearProgressIndicator(
+                                    value: progress,
+                                  )
+                                ],
+                              ),
+                            ),
+                            actions: <Widget>[
+                              done
+                                  ? FlatButton(
+                                      child: Text("Yay"),
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                      },
+                                    )
+                                  : FlatButton(
+                                      child: Text("Cancel"),
+                                      onPressed: () {
+                                        _flutterFFmpeg.cancel();
+                                        Navigator.pop(ctx);
+                                      },
+                                    )
+                            ],
+                          );
+                        }));
               },
             ),
             appDir == null
@@ -155,5 +227,100 @@ class _MyHomePageState extends State<MyHomePage> {
                         .toList())
           ],
         ));
+  }
+}
+
+class AudioItem extends StatefulWidget {
+  final File file;
+
+  const AudioItem({Key key, @required this.file}) : super(key: key);
+
+  @override
+  _AudioItemState createState() => _AudioItemState();
+}
+
+class _AudioItemState extends State<AudioItem> {
+  static FlutterSound flutterSound = FlutterSound();
+  static double currentPosition;
+  bool isPlaying = false;
+  double _seekbarProgress;
+  double duration;
+
+  static void maybeShutUp() {
+    if (flutterSound.isPlaying) {
+      flutterSound.stopPlayer();
+    }
+  }
+
+  void _togglePlaying() async {
+    if (isPlaying) {
+      await flutterSound.stopPlayer();
+      setState(() {
+        isPlaying = false;
+      });
+    } else {
+      if (flutterSound.isPlaying) {
+        await flutterSound.stopPlayer();
+      }
+      await flutterSound.startPlayer(widget.file.uri.toString());
+      isPlaying = true;
+
+      flutterSound.onPlayerStateChanged.listen((status) {
+        if (status != null) {
+          duration = status.duration;
+          currentPosition = status.currentPosition;
+          //print("$currentPosition / $duration");
+        }
+        setState(() {});
+      }, onDone: () {
+        setState(() {
+          isPlaying = false;
+        });
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Duration d = isPlaying
+        ? (_seekbarProgress == null
+            ? Duration(milliseconds: currentPosition.toInt())
+            : Duration(milliseconds: (duration * _seekbarProgress).toInt()))
+        : Duration.zero;
+
+    return Row(
+      children: <Widget>[
+        IconButton(
+          onPressed: () {
+            _togglePlaying();
+          },
+          icon: Icon(isPlaying ? Icons.stop : Icons.play_arrow),
+        ),
+        Expanded(
+          child: isPlaying
+              ? Slider.adaptive(
+                  onChangeStart: (v) {
+                    flutterSound.pausePlayer();
+                  },
+                  onChanged: (v) {
+                    _seekbarProgress = v;
+                  },
+                  onChangeEnd: (v) {
+                    currentPosition = duration * _seekbarProgress;
+                    _seekbarProgress = null;
+                    flutterSound.seekToPlayer((duration * v).toInt());
+                    flutterSound.resumePlayer();
+                  },
+                  value: _seekbarProgress ?? currentPosition / duration,
+                )
+              : Slider.adaptive(
+                  onChanged: null,
+                  value: 0,
+                ),
+        ),
+        Text("${d.inMinutes % Duration.minutesPerHour}:"
+            "${(d.inSeconds % Duration.secondsPerMinute).toString().padLeft(2, "0")}")
+      ],
+    );
   }
 }
