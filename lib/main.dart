@@ -183,60 +183,64 @@ class _MyHomePageState extends State<MyHomePage> {
             Divider(),
             RaisedButton(
               child: Text("Make video"),
-              onPressed: () {
-                var innerContext;
-                var setInnerState;
+              onPressed: (audioStatus != FileStatus.FINISHED ||
+                      imageStatus != FileStatus.FINISHED)
+                  ? null
+                  : () {
+                      var innerContext;
+                      var setInnerState;
 
-                double progress = 0;
-                makeVideo(
-                    image.path,
-                    audio.path,
-                    path.join(appDir.path,
-                        "${path.basenameWithoutExtension(audio.path)}.mp4"),
-                    (p) {
-                  setInnerState(() {
-                    progress = p;
-                  });
-                }).then((v) {
-                  Navigator.of(innerContext, rootNavigator: true).pop();
-                });
+                      double progress = 0;
+                      makeVideo(
+                          image.path,
+                          audio.path,
+                          path.join(appDir.path,
+                              "${path.basenameWithoutExtension(audio.path)}.mp4"),
+                          (p) {
+                        setInnerState(() {
+                          progress = p;
+                        });
+                      }).then((v) {
+                        Navigator.of(innerContext, rootNavigator: true).pop();
+                      });
 
-                showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (c) => StatefulBuilder(builder: (ctx, setSt) {
-                          innerContext = ctx;
-                          setInnerState = setSt;
-                          return WillPopScope(
-                            onWillPop: () async {
-                              return false;
-                            },
-                            child: AlertDialog(
-                              title: Text("Making video..."),
-                              content: Center(
-                                heightFactor: 1.0,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Text("${(progress * 100).round()}%"),
-                                    LinearProgressIndicator(
-                                      value: progress,
-                                    )
-                                  ],
-                                ),
-                              ),
-                              actions: <Widget>[
-                                FlatButton(
-                                  child: Text("Cancel"),
-                                  onPressed: () {
-                                    _flutterFFmpeg.cancel();
+                      showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (c) =>
+                              StatefulBuilder(builder: (ctx, setSt) {
+                                innerContext = ctx;
+                                setInnerState = setSt;
+                                return WillPopScope(
+                                  onWillPop: () async {
+                                    return false;
                                   },
-                                )
-                              ],
-                            ),
-                          );
-                        }));
-              },
+                                  child: AlertDialog(
+                                    title: Text("Making video..."),
+                                    content: Center(
+                                      heightFactor: 1.0,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: <Widget>[
+                                          Text("${(progress * 100).round()}%"),
+                                          LinearProgressIndicator(
+                                            value: progress,
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                    actions: <Widget>[
+                                      FlatButton(
+                                        child: Text("Cancel"),
+                                        onPressed: () {
+                                          _flutterFFmpeg.cancel();
+                                        },
+                                      )
+                                    ],
+                                  ),
+                                );
+                              }));
+                    },
             ),
             appDir == null
                 ? Container()
