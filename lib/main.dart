@@ -33,12 +33,16 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+enum FileStatus { NONE, LOADING, FINISHED }
+
 class _MyHomePageState extends State<MyHomePage> {
   File image;
   File audio;
   Directory appDir;
   int durationInMs;
   List<File> filesSorted;
+  FileStatus audioStatus = FileStatus.NONE;
+  FileStatus imageStatus = FileStatus.NONE;
 
   @override
   void initState() {
@@ -118,14 +122,23 @@ class _MyHomePageState extends State<MyHomePage> {
             RaisedButton(
               child: Text("Pick image"),
               onPressed: () async {
+                setState(() {
+                  imageStatus = FileStatus.LOADING;
+                });
                 String path =
                     await FilePicker.getFilePath(type: FileType.IMAGE);
                 setState(() {
-                  image = File(path);
+                  if (path != null) {
+                    image = File(path);
+                    imageStatus = FileStatus.FINISHED;
+                  } else {
+                    imageStatus =
+                        image == null ? FileStatus.NONE : FileStatus.FINISHED;
+                  }
                 });
               },
             ),
-            image != null
+            imageStatus == FileStatus.FINISHED
                 ? Container(
                     margin: EdgeInsets.all(20),
                     child: FadeInImage(
@@ -137,23 +150,36 @@ class _MyHomePageState extends State<MyHomePage> {
                     //   BoxShadow(blurRadius: 10, color: Colors.black38)
                     // ]),
                   )
-                : Text("No image selected"),
+                : Text(imageStatus == FileStatus.LOADING
+                    ? "Loading..."
+                    : "No image selected"),
             Divider(),
             RaisedButton(
               child: Text("Pick audio"),
               onPressed: () async {
                 _AudioItemState.maybeShutUp();
+                setState(() {
+                  audioStatus = FileStatus.LOADING;
+                });
                 String path =
                     await FilePicker.getFilePath(type: FileType.AUDIO);
-                if (path != null) {
-                  setState(() {
+                setState(() {
+                  if (path != null) {
                     audio = File(path);
+                    audioStatus = FileStatus.FINISHED;
                     retrieveDuration();
-                  });
-                }
+                  } else {
+                    audioStatus =
+                        audio == null ? FileStatus.NONE : FileStatus.FINISHED;
+                  }
+                });
               },
             ),
-            audio != null ? AudioItem(file: audio) : Text("No audio selected"),
+            audioStatus == FileStatus.FINISHED
+                ? AudioItem(file: audio)
+                : Text(audioStatus == FileStatus.LOADING
+                    ? "Loading..."
+                    : "No audio selected"),
             Divider(),
             RaisedButton(
               child: Text("Make video"),
@@ -236,7 +262,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     onPressed: () async {
                                       await f.delete();
                                       print("Deleted!");
-                                      setState(() {});
+                                      reloadFiles();
                                     },
                                   )
                                 ],
