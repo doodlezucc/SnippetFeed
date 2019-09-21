@@ -6,7 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:transparent_image/transparent_image.dart';
 
@@ -63,6 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
       "-acodec", "copy", // use the original codec to preserve audio quality
       "-r", "1", // output framerate = 1
       "-shortest", // plz don't use the endless loop of a single image to figure out the vid length, doofus.
+      "-y", // overwrite
       "$output" // output file
     ];
     bool initialized = false;
@@ -81,6 +82,9 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     int rc = await _flutterFFmpeg.executeWithArguments(arguments);
     print("FFmpeg process exited with rc $rc");
+    if (rc != 0 && File(output).existsSync()) {
+      await File(output).delete();
+    }
     setState(() {});
     return rc == 0;
   }
@@ -145,57 +149,56 @@ class _MyHomePageState extends State<MyHomePage> {
             RaisedButton(
               child: Text("Make video"),
               onPressed: () {
+                var innerContext;
                 var setInnerState;
-                bool done = false;
+
                 double progress = 0;
                 makeVideo(
                     image.path,
                     audio.path,
-                    join(appDir.path,
-                        "${DateTime.now().millisecondsSinceEpoch}.mp4"), (p) {
+                    path.join(appDir.path,
+                        "${path.basenameWithoutExtension(audio.path)}.mp4"),
+                    (p) {
                   setInnerState(() {
                     progress = p;
                   });
                 }).then((v) {
-                  setInnerState(() {
-                    done = true;
-                  });
+                  Navigator.of(innerContext, rootNavigator: true).pop();
                 });
 
                 showDialog(
                     context: context,
-                    builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) {
+                    barrierDismissible: false,
+                    builder: (c) => StatefulBuilder(builder: (ctx, setSt) {
+                          innerContext = ctx;
                           setInnerState = setSt;
-                          return AlertDialog(
-                            title: Text("Making video..."),
-                            content: Center(
-                              heightFactor: 1.0,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  Text("${(progress * 100).round()}%"),
-                                  LinearProgressIndicator(
-                                    value: progress,
-                                  )
-                                ],
+                          return WillPopScope(
+                            onWillPop: () async {
+                              return false;
+                            },
+                            child: AlertDialog(
+                              title: Text("Making video..."),
+                              content: Center(
+                                heightFactor: 1.0,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Text("${(progress * 100).round()}%"),
+                                    LinearProgressIndicator(
+                                      value: progress,
+                                    )
+                                  ],
+                                ),
                               ),
+                              actions: <Widget>[
+                                FlatButton(
+                                  child: Text("Cancel"),
+                                  onPressed: () {
+                                    _flutterFFmpeg.cancel();
+                                  },
+                                )
+                              ],
                             ),
-                            actions: <Widget>[
-                              done
-                                  ? FlatButton(
-                                      child: Text("Yay"),
-                                      onPressed: () {
-                                        Navigator.pop(ctx);
-                                      },
-                                    )
-                                  : FlatButton(
-                                      child: Text("Cancel"),
-                                      onPressed: () {
-                                        _flutterFFmpeg.cancel();
-                                        Navigator.pop(ctx);
-                                      },
-                                    )
-                            ],
                           );
                         }));
               },
@@ -209,16 +212,25 @@ class _MyHomePageState extends State<MyHomePage> {
                         .map((f) => Container(
                               child: Row(
                                 children: <Widget>[
-                                  Expanded(child: Text(basename(f.path))),
+                                  Expanded(child: Text(path.basename(f.path))),
                                   IconButton(
                                     icon: Icon(Icons.share),
                                     tooltip: "Share",
                                     onPressed: () async {
                                       var bytes =
                                           await (f as File).readAsBytes();
-                                      var title = basename(f.path);
+                                      var title = path.basename(f.path);
                                       await Share.file(
                                           title, title, bytes, "video/mp4");
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete),
+                                    tooltip: "Delete",
+                                    onPressed: () async {
+                                      await f.delete();
+                                      print("Deleted!");
+                                      setState(() {});
                                     },
                                   )
                                 ],
@@ -311,7 +323,8 @@ class _AudioItemState extends State<AudioItem> {
                     flutterSound.seekToPlayer((duration * v).toInt());
                     flutterSound.resumePlayer();
                   },
-                  value: _seekbarProgress ?? currentPosition / duration,
+                  value: math.min(
+                      1, _seekbarProgress ?? currentPosition / duration),
                 )
               : Slider.adaptive(
                   onChanged: null,
