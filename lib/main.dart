@@ -38,14 +38,14 @@ class _MyHomePageState extends State<MyHomePage> {
   File audio;
   Directory appDir;
   int durationInMs;
+  List<File> filesSorted;
 
   @override
   void initState() {
     super.initState();
     getApplicationDocumentsDirectory().then((dir) {
-      setState(() {
-        appDir = dir;
-      });
+      appDir = dir;
+      reloadFiles();
     });
   }
 
@@ -85,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (rc != 0 && File(output).existsSync()) {
       await File(output).delete();
     }
-    setState(() {});
+    reloadFiles();
     return rc == 0;
   }
 
@@ -95,6 +95,15 @@ class _MyHomePageState extends State<MyHomePage> {
     int duration = info["duration"];
     print(duration);
     durationInMs = duration;
+  }
+
+  void reloadFiles() {
+    filesSorted = List<File>.from(
+        appDir.listSync().where((entry) => entry.path.endsWith(".mp4")))
+      ..sort((a, b) =>
+          b.lastModifiedSync().millisecondsSinceEpoch -
+          a.lastModifiedSync().millisecondsSinceEpoch);
+    setState(() {});
   }
 
   @override
@@ -206,9 +215,7 @@ class _MyHomePageState extends State<MyHomePage> {
             appDir == null
                 ? Container()
                 : Column(
-                    children: appDir
-                        .listSync()
-                        //.where((entry) => entry.path.endsWith(".mp4"))
+                    children: filesSorted
                         .map((f) => Container(
                               child: Row(
                                 children: <Widget>[
@@ -217,8 +224,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     icon: Icon(Icons.share),
                                     tooltip: "Share",
                                     onPressed: () async {
-                                      var bytes =
-                                          await (f as File).readAsBytes();
+                                      var bytes = await f.readAsBytes();
                                       var title = path.basename(f.path);
                                       await Share.file(
                                           title, title, bytes, "video/mp4");
@@ -281,7 +287,6 @@ class _AudioItemState extends State<AudioItem> {
         if (status != null) {
           duration = status.duration;
           currentPosition = status.currentPosition;
-          //print("$currentPosition / $duration");
         }
         setState(() {});
       }, onDone: () {
