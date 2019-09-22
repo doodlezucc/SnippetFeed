@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: "vinsta",
       theme: ThemeData(
-        primarySwatch: Colors.brown,
+        primarySwatch: Colors.pink,
       ),
       home: MyHomePage(),
     );
