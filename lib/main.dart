@@ -33,16 +33,26 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+class StatusFile {
+  FileStatus status;
+  File file;
+  FileType type;
+
+  StatusFile({@required this.type, this.status = FileStatus.NONE, this.file});
+}
+
 enum FileStatus { NONE, LOADING, FINISHED }
 
 class _MyHomePageState extends State<MyHomePage> {
-  File image;
-  File audio;
+  StatusFile front = StatusFile(type: FileType.IMAGE);
+  StatusFile back = StatusFile(type: FileType.IMAGE);
+  StatusFile audio = StatusFile(type: FileType.AUDIO);
+
+  double frontSize = 0.8;
+
   Directory appDir;
   int durationInMs;
   List<File> filesSorted;
-  FileStatus audioStatus = FileStatus.NONE;
-  FileStatus imageStatus = FileStatus.NONE;
 
   @override
   void initState() {
@@ -95,7 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void retrieveDuration() async {
     Map<dynamic, dynamic> info =
-        await _flutterFFmpeg.getMediaInformation(audio.path);
+        await _flutterFFmpeg.getMediaInformation(audio.file.path);
     int duration = info["duration"];
     print(duration);
     durationInMs = duration;
@@ -110,6 +120,8 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
+  void update(StatusFile file) => setState(() {});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,72 +131,53 @@ class _MyHomePageState extends State<MyHomePage> {
         body: ListView(
           padding: EdgeInsets.all(20),
           children: <Widget>[
-            RaisedButton(
-              child: Text("Bild auswählen"),
-              onPressed: () async {
-                setState(() {
-                  imageStatus = FileStatus.LOADING;
-                });
-                String path =
-                    await FilePicker.getFilePath(type: FileType.IMAGE);
-                setState(() {
-                  if (path != null) {
-                    image = File(path);
-                    imageStatus = FileStatus.FINISHED;
-                  } else {
-                    imageStatus =
-                        image == null ? FileStatus.NONE : FileStatus.FINISHED;
-                  }
-                });
-              },
+            FileChooseButton(
+                chooseText: "Vordergrund auswählen",
+                file: front,
+                onUpdate: update),
+            Container(
+              color: Colors.amber,
+              height: 400,
+              child: Stack(
+                children: <Widget>[
+                  Center(
+                      child: front.status == FileStatus.FINISHED
+                          ? FadeInImage(
+                              image: FileImage(front.file),
+                              placeholder: MemoryImage(kTransparentImage),
+                              fit: BoxFit.contain,
+                              height: 400 * frontSize,
+                            )
+                          : Container()),
+                  Center(
+                      child: back.status == FileStatus.FINISHED
+                          ? FadeInImage(
+                              image: FileImage(back.file),
+                              placeholder: MemoryImage(kTransparentImage),
+                              fit: BoxFit.contain,
+                            )
+                          : Container()),
+                ],
+              ),
             ),
-            imageStatus == FileStatus.FINISHED
-                ? Container(
-                    margin: EdgeInsets.all(20),
-                    child: FadeInImage(
-                      image: FileImage(image),
-                      placeholder: MemoryImage(kTransparentImage),
-                      fit: BoxFit.cover,
-                    ),
-                    // decoration: BoxDecoration(boxShadow: [
-                    //   BoxShadow(blurRadius: 10, color: Colors.black38)
-                    // ]),
-                  )
-                : Text(imageStatus == FileStatus.LOADING
-                    ? "Wird geladen..."
-                    : "Kein Bild ausgewählt"),
+            Slider.adaptive(
+                value: frontSize,
+                onChanged: (v) {
+                  setState(() {
+                    frontSize = v;
+                  });
+                }),
             Divider(),
-            RaisedButton(
-              child: Text("Audio auswählen"),
-              onPressed: () async {
-                _AudioItemState.maybeShutUp();
-                setState(() {
-                  audioStatus = FileStatus.LOADING;
-                });
-                String path =
-                    await FilePicker.getFilePath(type: FileType.AUDIO);
-                setState(() {
-                  if (path != null) {
-                    audio = File(path);
-                    audioStatus = FileStatus.FINISHED;
-                    retrieveDuration();
-                  } else {
-                    audioStatus =
-                        audio == null ? FileStatus.NONE : FileStatus.FINISHED;
-                  }
-                });
-              },
+            FileChooseButton(
+              chooseText: "Audio auswählen",
+              file: audio,
+              onUpdate: update,
             ),
-            audioStatus == FileStatus.FINISHED
-                ? AudioItem(file: audio)
-                : Text(audioStatus == FileStatus.LOADING
-                    ? "Wird geladen..."
-                    : "Keine Datei ausgewählt"),
             Divider(),
             RaisedButton(
               child: Text("In Video konvertieren"),
-              onPressed: (audioStatus != FileStatus.FINISHED ||
-                      imageStatus != FileStatus.FINISHED)
+              onPressed: (audio.status != FileStatus.FINISHED ||
+                      front.status != FileStatus.FINISHED)
                   ? null
                   : () {
                       var innerContext;
@@ -192,10 +185,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
                       double progress = 0;
                       makeVideo(
-                          image.path,
-                          audio.path,
+                          front.file.path,
+                          audio.file.path,
                           path.join(appDir.path,
-                              "${path.basenameWithoutExtension(audio.path)}.mp4"),
+                              "${path.basenameWithoutExtension(audio.file.path)}.mp4"),
                           (p) {
                         setInnerState(() {
                           progress = p;
@@ -274,6 +267,48 @@ class _MyHomePageState extends State<MyHomePage> {
                         .toList())
           ],
         ));
+  }
+}
+
+class FileChooseButton extends StatelessWidget {
+  final StatusFile file;
+  final void Function(StatusFile file) onUpdate;
+  final String chooseText;
+
+  const FileChooseButton(
+      {Key key,
+      @required this.file,
+      @required this.chooseText,
+      @required this.onUpdate})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        RaisedButton(
+          child: Text(chooseText),
+          onPressed: () async {
+            onUpdate(file..status = FileStatus.LOADING);
+            String path = await FilePicker.getFilePath(type: FileType.IMAGE);
+            if (path != null) {
+              onUpdate(file
+                ..file = File(path)
+                ..status = FileStatus.FINISHED);
+            } else {
+              onUpdate(file
+                ..status =
+                    file == null ? FileStatus.NONE : FileStatus.FINISHED);
+            }
+          },
+        ),
+        file.status == FileStatus.FINISHED
+            ? Container()
+            : Text(file.status == FileStatus.LOADING
+                ? "Wird geladen..."
+                : "Keine Datei ausgewählt")
+      ],
+    );
   }
 }
 
