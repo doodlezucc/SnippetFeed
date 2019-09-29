@@ -4,13 +4,11 @@ import 'dart:math' as math;
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:transparent_image/transparent_image.dart';
 
-final FlutterFFmpeg _flutterFFmpeg = new FlutterFFmpeg();
+import 'process.dart';
 
 void main() => runApp(MyApp());
 
@@ -62,54 +60,6 @@ class _MyHomePageState extends State<MyHomePage> {
       appDir = dir;
       reloadFiles();
     });
-  }
-
-  // combines an image and an audio file into a video running at 1 fps. cool.
-  Future<bool> makeVideo(String img, String audio, String output,
-      void Function(double progress) progressCb) async {
-    print(img);
-    print(audio);
-    print(output);
-    List<String> arguments = [
-      "-r", "1", // input framerate = 1
-      "-loop", "1", // loop that image
-      "-i", "$img",
-      "-i", "$audio",
-      "-acodec", "copy", // use the original codec to preserve audio quality
-      "-r", "1", // output framerate = 1
-      "-shortest", // plz don't use the endless loop of a single image to figure out the vid length, doofus.
-      "-y", // overwrite
-      "$output" // output file
-    ];
-    bool initialized = false;
-    _flutterFFmpeg.enableStatisticsCallback((int time,
-        int size,
-        double bitrate,
-        double speed,
-        int videoFrameNumber,
-        double videoQuality,
-        double videoFps) {
-      if (initialized) {
-        progressCb(math.min(1, time.toDouble() / durationInMs.toDouble()));
-      } else {
-        initialized = true;
-      }
-    });
-    int rc = await _flutterFFmpeg.executeWithArguments(arguments);
-    print("FFmpeg process exited with rc $rc");
-    if (rc != 0 && File(output).existsSync()) {
-      await File(output).delete();
-    }
-    reloadFiles();
-    return rc == 0;
-  }
-
-  void retrieveDuration() async {
-    Map<dynamic, dynamic> info =
-        await _flutterFFmpeg.getMediaInformation(audio.file.path);
-    int duration = info["duration"];
-    print(duration);
-    durationInMs = duration;
   }
 
   void reloadFiles() {
@@ -213,6 +163,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 max: 1.0,
                 divisions: 500,
                 onChanged: (v) {
+                  sizeField.focusNode.unfocus();
                   setState(() {
                     frontSize = (v * 1000).roundToDouble() / 1000;
                     sizeField.controller.text = frontSize.toString();
@@ -243,9 +194,11 @@ class _MyHomePageState extends State<MyHomePage> {
                               "${path.basenameWithoutExtension(audio.file.path)}.mp4"),
                           (p) {
                         setInnerState(() {
-                          progress = p;
+                          progress = math.min(
+                              1, p.toDouble() / durationInMs.toDouble());
                         });
                       }).then((v) {
+                        reloadFiles();
                         Navigator.of(innerContext, rootNavigator: true).pop();
                       });
 
@@ -278,7 +231,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       FlatButton(
                                         child: Text("Abbrechen"),
                                         onPressed: () {
-                                          _flutterFFmpeg.cancel();
+                                          flutterFFmpeg.cancel();
                                         },
                                       )
                                     ],
