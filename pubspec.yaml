@@ -30,12 +30,14 @@ dependencies:
   esys_flutter_share:
   transparent_image:
   flutter_sound:
-  image: ^2.1.4
+  image: # ^2.1.4
+    git:
+      url: git://github.com/brendan-duncan/image
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.7.3
+  # flutter_launcher_icons:
 
 flutter_icons:
   android: "launcher_icon" 

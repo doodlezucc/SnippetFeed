@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+import 'package:image/image.dart' as img;
 
 final FlutterFFmpeg flutterFFmpeg = new FlutterFFmpeg();
 
@@ -9,6 +11,63 @@ Future<int> retrieveDuration(String path) async {
   int duration = info["duration"];
   print(duration);
   return duration;
+}
+
+img.Image _cropSquare(img.Image image, int size) {
+  return img.bakeOrientation(img.copyResizeCropSquare(image, size));
+}
+
+Future<img.Image> createImage(
+    {@required File front,
+    @required File back,
+    @required double frontM,
+    @required int outSize,
+    @required void Function(double progress) progressCb}) async {
+  print("reading front...");
+  var frontBytes = await front.readAsBytes();
+  progressCb(0.1);
+  print("reading back...");
+  var backBytes = await back.readAsBytes();
+  progressCb(0.2);
+  print("preparing images...");
+  img.Image out = img.decodeImage(backBytes);
+  img.Image foreground = img.decodeImage(frontBytes);
+  progressCb(0.25);
+
+  out = _cropSquare(out, outSize);
+  progressCb(0.5);
+  foreground = _cropSquare(foreground, outSize);
+  progressCb(0.75);
+
+  int inset = (outSize * (0.5 - frontM * 0.5)).round();
+  int size = (outSize * frontM).round();
+  print("drawing foreground...");
+  img.drawImage(out, foreground,
+      dstX: inset, dstY: inset, dstW: size, dstH: size);
+  progressCb(1.0);
+  return out;
+}
+
+Future<File> makeImage(
+    {@required File main,
+    @required File background,
+    @required File output,
+    double frontSize = 0.8,
+    int outSize = 1080,
+    void Function(double progress) progressCallback}) async {
+  var i = await createImage(
+      back: background,
+      front: main,
+      frontM: frontSize,
+      outSize: outSize,
+      progressCb: progressCallback);
+  var bytes = img.encodeJpg(i);
+  if (!await output.exists()) {
+    await output.create();
+  }
+  await output.writeAsBytes(bytes);
+  print("written!");
+  return output;
 }
 
 // combines an image and an audio file into a video running at 1 fps. cool.

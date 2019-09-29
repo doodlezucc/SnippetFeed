@@ -108,12 +108,6 @@ class _MyHomePageState extends State<MyHomePage> {
         body: ListView(
           padding: EdgeInsets.all(20),
           children: <Widget>[
-            FlatButton(
-              child: Text("oof refresh"),
-              onPressed: () {
-                resetSizeField();
-              },
-            ),
             Row(
               children: <Widget>[
                 FileChooseButton(
@@ -125,37 +119,42 @@ class _MyHomePageState extends State<MyHomePage> {
                     chooseText: "Hintergrund", file: back, onUpdate: update),
               ],
             ),
-            AspectRatio(
-              aspectRatio: 1.0,
-              child: Container(
-                  decoration: BoxDecoration(boxShadow: [
-                    BoxShadow(blurRadius: 10, color: Colors.black26)
-                  ]),
-                  child: Stack(
-                    children: <Widget>[
-                      Center(
-                          child: Image(
-                        image: back.status == FileStatus.FINISHED
-                            ? FileImage(back.file)
-                            : AssetImage("assets/testpattern.png"),
-                        gaplessPlayback: true,
-                        fit: BoxFit.cover,
-                        height: double.infinity,
-                      )),
-                      Transform.scale(
-                        scale: frontSize,
-                        child: Center(
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: Container(
+                    decoration: BoxDecoration(boxShadow: [
+                      BoxShadow(blurRadius: 10, color: Colors.black26)
+                    ]),
+                    child: Stack(
+                      children: <Widget>[
+                        Center(
                             child: Image(
-                          image: front.status == FileStatus.FINISHED
-                              ? FileImage(front.file)
+                          image: back.status == FileStatus.FINISHED
+                              ? FileImage(back.file)
                               : AssetImage("assets/testpattern.png"),
                           gaplessPlayback: true,
                           fit: BoxFit.cover,
+                          width: double.infinity,
                           height: double.infinity,
                         )),
-                      ),
-                    ],
-                  )),
+                        Transform.scale(
+                          scale: frontSize,
+                          child: Center(
+                              child: Image(
+                            image: front.status == FileStatus.FINISHED
+                                ? FileImage(front.file)
+                                : AssetImage("assets/testpattern.png"),
+                            gaplessPlayback: true,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          )),
+                        ),
+                      ],
+                    )),
+              ),
             ),
             Slider.adaptive(
                 value: frontSize,
@@ -174,7 +173,10 @@ class _MyHomePageState extends State<MyHomePage> {
             FileChooseButton(
               chooseText: "Audio auswählen",
               file: audio,
-              onUpdate: update,
+              onUpdate: (f) async {
+                durationInMs = await retrieveDuration(f.file.path);
+                setState(() {});
+              },
             ),
             Divider(),
             RaisedButton(
@@ -185,21 +187,37 @@ class _MyHomePageState extends State<MyHomePage> {
                   : () {
                       var innerContext;
                       var setInnerState;
+                      int step = 0;
 
                       double progress = 0;
-                      makeVideo(
-                          front.file.path,
-                          audio.file.path,
-                          path.join(appDir.path,
-                              "${path.basenameWithoutExtension(audio.file.path)}.mp4"),
-                          (p) {
-                        setInnerState(() {
-                          progress = math.min(
-                              1, p.toDouble() / durationInMs.toDouble());
+                      makeImage(
+                          background: back.file,
+                          main: front.file,
+                          frontSize: frontSize,
+                          outSize: 1080,
+                          output: File(path.join(appDir.path,
+                              "${path.basenameWithoutExtension(audio.file.path)}.jpg")),
+                          progressCallback: (v) {
+                            print("Progress: $v");
+                            setInnerState(() {
+                              progress = v;
+                            });
+                          }).then((file) {
+                        step = 1;
+                        makeVideo(
+                            file.path,
+                            audio.file.path,
+                            path.join(appDir.path,
+                                "${path.basenameWithoutExtension(audio.file.path)}.mp4"),
+                            (p) {
+                          setInnerState(() {
+                            progress = math.min(
+                                1, p.toDouble() / durationInMs.toDouble());
+                          });
+                        }).then((v) {
+                          reloadFiles();
+                          Navigator.of(innerContext, rootNavigator: true).pop();
                         });
-                      }).then((v) {
-                        reloadFiles();
-                        Navigator.of(innerContext, rootNavigator: true).pop();
                       });
 
                       showDialog(
@@ -214,13 +232,16 @@ class _MyHomePageState extends State<MyHomePage> {
                                     return false;
                                   },
                                   child: AlertDialog(
-                                    title: Text("Konvertiere in Video..."),
+                                    title: Text("Video wird erstellt..."),
                                     content: Center(
                                       heightFactor: 1.0,
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: <Widget>[
-                                          Text("${(progress * 100).round()}%"),
+                                          Text((step == 0
+                                                  ? "Cover wird erstellt..."
+                                                  : "In Video konvertieren...") +
+                                              " ${(progress * 100).round()}%"),
                                           LinearProgressIndicator(
                                             value: progress,
                                           )
@@ -295,7 +316,7 @@ class FileChooseButton extends StatelessWidget {
           child: Text(chooseText),
           onPressed: () async {
             onUpdate(file..status = FileStatus.LOADING);
-            String path = await FilePicker.getFilePath(type: FileType.IMAGE);
+            String path = await FilePicker.getFilePath(type: file.type);
             if (path != null) {
               onUpdate(file
                 ..file = File(path)
