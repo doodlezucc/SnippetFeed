@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: "vinsta",
       theme: ThemeData(
-        primarySwatch: Colors.purple,
+        primarySwatch: Colors.brown,
       ),
       home: MyHomePage(),
     );
@@ -57,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    resetSizeField();
     getApplicationDocumentsDirectory().then((dir) {
       appDir = dir;
       reloadFiles();
@@ -122,6 +123,32 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void update(StatusFile file) => setState(() {});
 
+  TextField sizeField;
+
+  void resetSizeField() {
+    sizeField = TextField(
+      focusNode: FocusNode(),
+      onChanged: (s) {
+        double result = double.tryParse(s);
+        print(result);
+        if (result != null) {
+          setState(() {
+            frontSize = math.max(0.5, math.min(1.0, result));
+          });
+        }
+      },
+      onEditingComplete: () {
+        sizeField.focusNode.unfocus();
+        sizeField.controller.text = frontSize.toString();
+      },
+      autofocus: false,
+      autocorrect: false,
+      controller: TextEditingController(text: frontSize.toString()),
+      keyboardType:
+          TextInputType.numberWithOptions(decimal: true, signed: true),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,42 +158,67 @@ class _MyHomePageState extends State<MyHomePage> {
         body: ListView(
           padding: EdgeInsets.all(20),
           children: <Widget>[
-            FileChooseButton(
-                chooseText: "Vordergrund auswählen",
-                file: front,
-                onUpdate: update),
-            Container(
-              color: Colors.amber,
-              height: 400,
-              child: Stack(
-                children: <Widget>[
-                  Center(
-                      child: front.status == FileStatus.FINISHED
-                          ? FadeInImage(
-                              image: FileImage(front.file),
-                              placeholder: MemoryImage(kTransparentImage),
-                              fit: BoxFit.contain,
-                              height: 400 * frontSize,
-                            )
-                          : Container()),
-                  Center(
-                      child: back.status == FileStatus.FINISHED
-                          ? FadeInImage(
-                              image: FileImage(back.file),
-                              placeholder: MemoryImage(kTransparentImage),
-                              fit: BoxFit.contain,
-                            )
-                          : Container()),
-                ],
-              ),
+            FlatButton(
+              child: Text("oof refresh"),
+              onPressed: () {
+                resetSizeField();
+              },
+            ),
+            Row(
+              children: <Widget>[
+                FileChooseButton(
+                    chooseText: "Vordergrund", file: front, onUpdate: update),
+                Expanded(
+                  child: Container(),
+                ),
+                FileChooseButton(
+                    chooseText: "Hintergrund", file: back, onUpdate: update),
+              ],
+            ),
+            AspectRatio(
+              aspectRatio: 1.0,
+              child: Container(
+                  decoration: BoxDecoration(boxShadow: [
+                    BoxShadow(blurRadius: 10, color: Colors.black26)
+                  ]),
+                  child: Stack(
+                    children: <Widget>[
+                      Center(
+                          child: Image(
+                        image: back.status == FileStatus.FINISHED
+                            ? FileImage(back.file)
+                            : AssetImage("assets/testpattern.png"),
+                        gaplessPlayback: true,
+                        fit: BoxFit.cover,
+                        height: double.infinity,
+                      )),
+                      Transform.scale(
+                        scale: frontSize,
+                        child: Center(
+                            child: Image(
+                          image: front.status == FileStatus.FINISHED
+                              ? FileImage(front.file)
+                              : AssetImage("assets/testpattern.png"),
+                          gaplessPlayback: true,
+                          fit: BoxFit.cover,
+                          height: double.infinity,
+                        )),
+                      ),
+                    ],
+                  )),
             ),
             Slider.adaptive(
                 value: frontSize,
+                min: 0.5,
+                max: 1.0,
+                divisions: 500,
                 onChanged: (v) {
                   setState(() {
-                    frontSize = v;
+                    frontSize = (v * 1000).roundToDouble() / 1000;
+                    sizeField.controller.text = frontSize.toString();
                   });
                 }),
+            sizeField,
             Divider(),
             FileChooseButton(
               chooseText: "Audio auswählen",
@@ -302,11 +354,11 @@ class FileChooseButton extends StatelessWidget {
             }
           },
         ),
-        file.status == FileStatus.FINISHED
-            ? Container()
-            : Text(file.status == FileStatus.LOADING
-                ? "Wird geladen..."
-                : "Keine Datei ausgewählt")
+        // file.status == FileStatus.FINISHED
+        //     ? Container()
+        //     : Text(file.status == FileStatus.LOADING
+        //         ? "Wird geladen..."
+        //         : "Keine Datei ausgewählt")
       ],
     );
   }
