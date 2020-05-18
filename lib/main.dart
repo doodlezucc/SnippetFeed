@@ -41,7 +41,7 @@ class StatusFile {
 
 enum FileStatus { NONE, LOADING, FINISHED }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   StatusFile front = StatusFile(type: FileType.image);
   StatusFile back = StatusFile(type: FileType.image);
   StatusFile audio = StatusFile(type: FileType.audio);
@@ -55,11 +55,27 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     resetSizeField();
-    getApplicationDocumentsDirectory().then((dir) {
-      appDir = dir;
+    loadDirectory();
+  }
+
+  void loadDirectory() async {
+    try {
+      appDir = await getExternalStorageDirectory();
+      print('got external dir :)');
+    } catch (e) {
+      appDir = await getApplicationDocumentsDirectory();
+      print('loser directory');
+    } finally {
       reloadFiles();
-    });
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
   }
 
   void reloadFiles() {
@@ -69,6 +85,13 @@ class _MyHomePageState extends State<MyHomePage> {
           b.lastModifiedSync().millisecondsSinceEpoch -
           a.lastModifiedSync().millisecondsSinceEpoch);
     setState(() {});
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _AudioItemState.maybeShutUp();
+    }
   }
 
   void update(StatusFile file) => setState(() {});
@@ -131,7 +154,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: <Widget>[
                         Center(
                             child: Image(
-                          image: back.status == FileStatus.FINISHED
+                          image: back.file != null
                               ? FileImage(back.file)
                               : AssetImage("assets/testpattern.png"),
                           gaplessPlayback: true,
@@ -143,7 +166,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           scale: frontSize,
                           child: Center(
                               child: Image(
-                            image: front.status == FileStatus.FINISHED
+                            image: front.file != null
                                 ? FileImage(front.file)
                                 : AssetImage("assets/testpattern.png"),
                             gaplessPlayback: true,
@@ -174,12 +197,22 @@ class _MyHomePageState extends State<MyHomePage> {
               chooseText: "Audio auswählen",
               file: audio,
               onUpdate: (f) async {
-                if (f.file != null) {
+                if (f.status == FileStatus.FINISHED) {
                   durationInMs = await retrieveDuration(f.file.path);
                 }
                 setState(() {});
               },
             ),
+            audio.status == FileStatus.FINISHED
+                ? AudioItem(file: audio.file)
+                : Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Center(
+                      child: Text(audio.status == FileStatus.LOADING
+                          ? "Wird geladen..."
+                          : "Keine Datei ausgewählt"),
+                    ),
+                  ),
             Divider(),
             RaisedButton(
               child: Text("In Video konvertieren"),
@@ -188,34 +221,29 @@ class _MyHomePageState extends State<MyHomePage> {
                   ? null
                   : () {
                       var innerContext;
-                      var setInnerState;
+                      void Function(void Function()) setInnerState = (bruv) {};
                       int step = 0;
+                      var fileBase =
+                          path.basenameWithoutExtension(audio.file.path);
 
                       double progress = 0;
                       makeImage(
                           background: back.file,
                           main: front.file,
                           frontSize: frontSize,
-                          outSize: 1080,
-                          output: File(path.join(appDir.path,
-                              "${path.basenameWithoutExtension(audio.file.path)}.jpg")),
+                          outSize: 640,
+                          output: File(path.join(appDir.path, "$fileBase.jpg")),
                           progressCallback: (v) {
                             print("Progress: $v");
-                            setInnerState(() {
-                              progress = v;
-                            });
+                            progress = v;
+                            setInnerState(() {});
                           }).then((file) {
                         step = 1;
-                        makeVideo(
-                            file.path,
-                            audio.file.path,
-                            path.join(appDir.path,
-                                "${path.basenameWithoutExtension(audio.file.path)}.mp4"),
-                            (p) {
-                          setInnerState(() {
-                            progress = math.min(
-                                1, p.toDouble() / durationInMs.toDouble());
-                          });
+                        makeVideo(file.path, audio.file.path,
+                            path.join(appDir.path, "$fileBase.mp4"), (p) {
+                          progress = math.min(
+                              1, p.toDouble() / durationInMs.toDouble());
+                          setInnerState(() {});
                         }).then((v) {
                           reloadFiles();
                           Navigator.of(innerContext, rootNavigator: true).pop();
@@ -326,15 +354,10 @@ class FileChooseButton extends StatelessWidget {
             } else {
               onUpdate(file
                 ..status =
-                    file == null ? FileStatus.NONE : FileStatus.FINISHED);
+                    file.file == null ? FileStatus.NONE : FileStatus.FINISHED);
             }
           },
-        ),
-        // file.status == FileStatus.FINISHED
-        //     ? Container()
-        //     : Text(file.status == FileStatus.LOADING
-        //         ? "Wird geladen..."
-        //         : "Keine Datei ausgewählt")
+        )
       ],
     );
   }
@@ -356,11 +379,11 @@ class _AudioItemState extends State<AudioItem> {
   double _seekbarProgress;
   double duration;
 
-  // static void maybeShutUp() {
-  //   if (flutterSound.isPlaying) {
-  //     flutterSound.stopPlayer();
-  //   }
-  // }
+  static void maybeShutUp() {
+    if (flutterSound.isPlaying) {
+      flutterSound.stopPlayer();
+    }
+  }
 
   void _togglePlaying() async {
     if (isPlaying) {

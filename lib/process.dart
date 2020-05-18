@@ -63,7 +63,7 @@ Future<File> makeImage(
       frontM: frontSize,
       outSize: outSize,
       progressCb: progressCallback);
-  var bytes = img.encodeJpg(i);
+  var bytes = img.encodePng(i);
   if (!await output.exists()) {
     await output.create();
   }
@@ -78,13 +78,14 @@ Future<bool> makeVideo(String img, String audio, String output,
   print(img);
   print(audio);
   print(output);
+  const framerate = 1;
   List<String> arguments = [
-    "-r", "1", // input framerate = 1
+    "-r", "$framerate", // input framerate = 1
     "-loop", "1", // loop that image
     "-i", "$img",
     "-i", "$audio",
-    "-acodec", "copy", // use the original codec to preserve audio quality
-    "-r", "1", // output framerate = 1
+    //"-acodec", "copy", // use the original codec to preserve audio quality
+    "-r", "$framerate", // output framerate = 1
     "-shortest", // plz don't use the endless loop of a single image to figure out the vid length, doofus.
     "-y", // overwrite
     "$output" // output file
