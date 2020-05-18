@@ -4,7 +4,7 @@ import 'dart:math' as math;
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
+import 'package:flutter_sound/flutter_sound_player.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
@@ -350,17 +350,17 @@ class AudioItem extends StatefulWidget {
 }
 
 class _AudioItemState extends State<AudioItem> {
-  static FlutterSound flutterSound = FlutterSound();
+  static FlutterSoundPlayer flutterSound = FlutterSoundPlayer();
   static double currentPosition;
   bool isPlaying = false;
   double _seekbarProgress;
   double duration;
 
-  static void maybeShutUp() {
-    if (flutterSound.isPlaying) {
-      flutterSound.stopPlayer();
-    }
-  }
+  // static void maybeShutUp() {
+  //   if (flutterSound.isPlaying) {
+  //     flutterSound.stopPlayer();
+  //   }
+  // }
 
   void _togglePlaying() async {
     if (isPlaying) {

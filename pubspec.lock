@@ -126,11 +126,9 @@ packages:
   image:
     dependency: "direct main"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: e2c18c5e3b6f17ee42aabeb9ae4ded41336938f2
-      url: "git://github.com/brendan-duncan/image"
-    source: git
+      name: image
+      url: "https://pub.dartlang.org"
+    source: hosted
     version: "2.1.12"
   matcher:
     dependency: transitive
