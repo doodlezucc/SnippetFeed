@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:image/image.dart' as img;
 
-final FlutterFFmpeg flutterFFmpeg = new FlutterFFmpeg();
-final FlutterFFprobe flutterFFprobe = new FlutterFFprobe();
-final FlutterFFmpegConfig flutterFFmpegConfig = new FlutterFFmpegConfig();
+final flutterFFmpeg = FlutterFFmpeg();
+final flutterFFprobe = FlutterFFprobe();
+final flutterFFmpegConfig = FlutterFFmpegConfig();
 
 Future<int> retrieveDuration(String path) async {
   Map<dynamic, dynamic> info = await flutterFFprobe.getMediaInformation(path);
@@ -46,6 +46,9 @@ Future<img.Image> createImage(
   print("drawing foreground...");
   img.drawImage(out, foreground,
       dstX: inset, dstY: inset, dstW: size, dstH: size);
+  progressCb(0.85);
+  print("smoothing...");
+  img.smooth(out, 0.8);
   progressCb(1.0);
   return out;
 }

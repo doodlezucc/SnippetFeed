@@ -227,28 +227,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           path.basenameWithoutExtension(audio.file.path);
 
                       double progress = 0;
-                      makeImage(
-                          background: back.file,
-                          main: front.file,
-                          frontSize: frontSize,
-                          outSize: 640,
-                          output: File(path.join(appDir.path, "$fileBase.jpg")),
-                          progressCallback: (v) {
-                            print("Progress: $v");
-                            progress = v;
-                            setInnerState(() {});
-                          }).then((file) {
-                        step = 1;
-                        makeVideo(file.path, audio.file.path,
-                            path.join(appDir.path, "$fileBase.mp4"), (p) {
-                          progress = math.min(
-                              1, p.toDouble() / durationInMs.toDouble());
-                          setInnerState(() {});
-                        }).then((v) {
-                          reloadFiles();
-                          Navigator.of(innerContext, rootNavigator: true).pop();
-                        });
-                      });
 
                       showDialog(
                           context: context,
@@ -289,6 +267,29 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                   ),
                                 );
                               }));
+
+                      makeImage(
+                          background: back.file,
+                          main: front.file,
+                          frontSize: frontSize,
+                          outSize: 600,
+                          output: File(path.join(appDir.path, "$fileBase.jpg")),
+                          progressCallback: (v) {
+                            print("Progress: $v");
+                            progress = v;
+                            setInnerState(() {});
+                          }).then((file) {
+                        step = 1;
+                        makeVideo(file.path, audio.file.path,
+                            path.join(appDir.path, "$fileBase.mp4"), (p) {
+                          progress = math.min(
+                              1, p.toDouble() / durationInMs.toDouble());
+                          setInnerState(() {});
+                        }).then((v) {
+                          reloadFiles();
+                          Navigator.of(innerContext, rootNavigator: true).pop();
+                        });
+                      });
                     },
             ),
             appDir == null
