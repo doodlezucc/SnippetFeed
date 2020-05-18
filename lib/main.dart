@@ -42,9 +42,9 @@ class StatusFile {
 enum FileStatus { NONE, LOADING, FINISHED }
 
 class _MyHomePageState extends State<MyHomePage> {
-  StatusFile front = StatusFile(type: FileType.IMAGE);
-  StatusFile back = StatusFile(type: FileType.IMAGE);
-  StatusFile audio = StatusFile(type: FileType.AUDIO);
+  StatusFile front = StatusFile(type: FileType.image);
+  StatusFile back = StatusFile(type: FileType.image);
+  StatusFile audio = StatusFile(type: FileType.audio);
 
   double frontSize = 0.8;
 
@@ -174,7 +174,9 @@ class _MyHomePageState extends State<MyHomePage> {
               chooseText: "Audio auswählen",
               file: audio,
               onUpdate: (f) async {
-                durationInMs = await retrieveDuration(f.file.path);
+                if (f.file != null) {
+                  durationInMs = await retrieveDuration(f.file.path);
+                }
                 setState(() {});
               },
             ),
