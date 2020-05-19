@@ -7,11 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound_player.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:vinsta/input_slider.dart';
-import 'package:vinsta/layered_image.dart';
 
 import 'process.dart';
 import 'buttons.dart';
+import 'layered_image.dart';
 
 void main() => runApp(MyApp());
 
@@ -104,10 +103,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               child: LayeredImage(
                   back: back.file, front: front.file, frontSize: frontSize),
             ),
-            InputSlider(
-              value: frontSize,
-              onChanged: (v) => setState(() => frontSize = v),
-            ),
+            Slider.adaptive(
+                value: frontSize,
+                min: 0.5,
+                max: 1.0,
+                divisions: 50,
+                label: "${(frontSize * 100).round()}%",
+                onChanged: (v) {
+                  var value = (v * 100).roundToDouble() / 100;
+                  setState(() {
+                    frontSize = value;
+                  });
+                }),
             Divider(),
             FilePickButton(
               text: "Audio auswählen",
