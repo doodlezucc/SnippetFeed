@@ -7,8 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound_player.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:vinsta/input_slider.dart';
+import 'package:vinsta/layered_image.dart';
 
 import 'process.dart';
+import 'buttons.dart';
 
 void main() => runApp(MyApp());
 
@@ -31,16 +34,6 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class StatusFile {
-  FileStatus status;
-  File file;
-  FileType type;
-
-  StatusFile({@required this.type, this.status = FileStatus.NONE, this.file});
-}
-
-enum FileStatus { NONE, LOADING, FINISHED }
-
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   StatusFile front = StatusFile(type: FileType.image);
   StatusFile back = StatusFile(type: FileType.image);
@@ -56,7 +49,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    resetSizeField();
     loadDirectory();
   }
 
@@ -96,32 +88,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   void update(StatusFile file) => setState(() {});
 
-  TextField sizeField;
-
-  void resetSizeField() {
-    sizeField = TextField(
-      focusNode: FocusNode(),
-      onChanged: (s) {
-        double result = double.tryParse(s);
-        print(result);
-        if (result != null) {
-          setState(() {
-            frontSize = math.max(0.5, math.min(1.0, result));
-          });
-        }
-      },
-      onEditingComplete: () {
-        sizeField.focusNode.unfocus();
-        sizeField.controller.text = frontSize.toString();
-      },
-      autofocus: false,
-      autocorrect: false,
-      controller: TextEditingController(text: frontSize.toString()),
-      keyboardType:
-          TextInputType.numberWithOptions(decimal: true, signed: true),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,72 +95,22 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           title: Text("vinsta"),
         ),
         body: ListView(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                FileChooseButton(
-                    chooseText: "Vordergrund", file: front, onUpdate: update),
-                Expanded(
-                  child: Container(),
-                ),
-                FileChooseButton(
-                    chooseText: "Hintergrund", file: back, onUpdate: update),
-              ],
-            ),
+            ImagePickButton(text: "Vordergrund", file: front, onUpdate: update),
+            ImagePickButton(text: "Hintergrund", file: back, onUpdate: update),
             Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: AspectRatio(
-                aspectRatio: 1.0,
-                child: Container(
-                    decoration: BoxDecoration(boxShadow: [
-                      BoxShadow(blurRadius: 10, color: Colors.black26)
-                    ]),
-                    child: Stack(
-                      children: <Widget>[
-                        Center(
-                            child: Image(
-                          image: back.file != null
-                              ? FileImage(back.file)
-                              : AssetImage("assets/testpattern.png"),
-                          gaplessPlayback: true,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        )),
-                        Transform.scale(
-                          scale: frontSize,
-                          child: Center(
-                              child: Image(
-                            image: front.file != null
-                                ? FileImage(front.file)
-                                : AssetImage("assets/testpattern.png"),
-                            gaplessPlayback: true,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                          )),
-                        ),
-                      ],
-                    )),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: LayeredImage(
+                  back: back.file, front: front.file, frontSize: frontSize),
             ),
-            Slider.adaptive(
-                value: frontSize,
-                min: 0.5,
-                max: 1.0,
-                divisions: 500,
-                onChanged: (v) {
-                  sizeField.focusNode.unfocus();
-                  setState(() {
-                    frontSize = (v * 1000).roundToDouble() / 1000;
-                    sizeField.controller.text = frontSize.toString();
-                  });
-                }),
-            sizeField,
+            InputSlider(
+              value: frontSize,
+              onChanged: (v) => setState(() => frontSize = v),
+            ),
             Divider(),
-            FileChooseButton(
-              chooseText: "Audio auswählen",
+            FilePickButton(
+              text: "Audio auswählen",
               file: audio,
               onUpdate: (f) async {
                 if (f.status == FileStatus.FINISHED) {
@@ -324,43 +240,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         .toList())
           ],
         ));
-  }
-}
-
-class FileChooseButton extends StatelessWidget {
-  final StatusFile file;
-  final void Function(StatusFile file) onUpdate;
-  final String chooseText;
-
-  const FileChooseButton(
-      {Key key,
-      @required this.file,
-      @required this.chooseText,
-      @required this.onUpdate})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        RaisedButton(
-          child: Text(chooseText),
-          onPressed: () async {
-            onUpdate(file..status = FileStatus.LOADING);
-            String path = await FilePicker.getFilePath(type: file.type);
-            if (path != null) {
-              onUpdate(file
-                ..file = File(path)
-                ..status = FileStatus.FINISHED);
-            } else {
-              onUpdate(file
-                ..status =
-                    file.file == null ? FileStatus.NONE : FileStatus.FINISHED);
-            }
-          },
-        )
-      ],
-    );
   }
 }
 
