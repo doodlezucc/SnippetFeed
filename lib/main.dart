@@ -4,10 +4,10 @@ import 'dart:math' as math;
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound_player.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
+import 'audio.dart';
 import 'process.dart';
 import 'buttons.dart';
 import 'layered_image.dart';
@@ -20,7 +20,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: "vinsta",
       theme: ThemeData(
-          primarySwatch: Colors.brown, sliderTheme: SliderThemeData()),
+        primarySwatch: Colors.brown,
+        sliderTheme: SliderThemeData(
+          activeTickMarkColor: Colors.transparent,
+          inactiveTickMarkColor: Colors.transparent,
+        ),
+      ),
       home: MyHomePage(),
     );
   }
@@ -41,7 +46,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Directory appDir;
   int durationInMs;
-  List<File> filesSorted;
+  List<File> filesSorted = [];
+
+  AudioController ctrl;
 
   @override
   void initState() {
@@ -80,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      _AudioItemState.maybeShutUp();
+      AudioItem.maybeShutUp();
     }
   }
 
@@ -158,13 +165,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   file: audio,
                   onUpdate: (f) async {
                     if (f.status == FileStatus.FINISHED) {
+                      ctrl = AudioController(audio.file);
                       durationInMs = await retrieveDuration(f.file.path);
                     }
                     setState(() {});
                   },
                 ),
                 audio.status == FileStatus.FINISHED
-                    ? AudioItem(file: audio.file)
+                    ? AudioItem(controller: ctrl)
                     : Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Center(
@@ -287,100 +295,5 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             );
           },
         ));
-  }
-}
-
-class AudioItem extends StatefulWidget {
-  final File file;
-
-  const AudioItem({Key key, @required this.file}) : super(key: key);
-
-  @override
-  _AudioItemState createState() => _AudioItemState();
-}
-
-class _AudioItemState extends State<AudioItem> {
-  static FlutterSoundPlayer flutterSound = FlutterSoundPlayer();
-  static double currentPosition;
-  bool isPlaying = false;
-  double _seekbarProgress;
-  double duration;
-
-  static void maybeShutUp() {
-    if (flutterSound.isPlaying) {
-      flutterSound.stopPlayer();
-    }
-  }
-
-  void _togglePlaying() async {
-    if (isPlaying) {
-      await flutterSound.stopPlayer();
-      setState(() {
-        isPlaying = false;
-      });
-    } else {
-      if (flutterSound.isPlaying) {
-        await flutterSound.stopPlayer();
-      }
-      await flutterSound.startPlayer(widget.file.uri.toString());
-      isPlaying = true;
-
-      flutterSound.onPlayerStateChanged.listen((status) {
-        if (status != null) {
-          duration = status.duration;
-          currentPosition = status.currentPosition;
-        }
-        setState(() {});
-      }, onDone: () {
-        setState(() {
-          isPlaying = false;
-        });
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Duration d = isPlaying
-        ? (_seekbarProgress == null
-            ? Duration(milliseconds: currentPosition.toInt())
-            : Duration(milliseconds: (duration * _seekbarProgress).toInt()))
-        : Duration.zero;
-
-    return Row(
-      children: <Widget>[
-        IconButton(
-          onPressed: () {
-            _togglePlaying();
-          },
-          icon: Icon(isPlaying ? Icons.stop : Icons.play_arrow),
-        ),
-        Expanded(
-          child: isPlaying
-              ? Slider.adaptive(
-                  onChangeStart: (v) {
-                    flutterSound.pausePlayer();
-                  },
-                  onChanged: (v) {
-                    _seekbarProgress = v;
-                  },
-                  onChangeEnd: (v) {
-                    currentPosition = duration * _seekbarProgress;
-                    _seekbarProgress = null;
-                    flutterSound.seekToPlayer((duration * v).toInt());
-                    flutterSound.resumePlayer();
-                  },
-                  value: math.min(
-                      1, _seekbarProgress ?? currentPosition / duration),
-                )
-              : Slider.adaptive(
-                  onChanged: null,
-                  value: 0,
-                ),
-        ),
-        Text("${d.inMinutes % Duration.minutesPerHour}:"
-            "${(d.inSeconds % Duration.secondsPerMinute).toString().padLeft(2, "0")}")
-      ],
-    );
   }
 }
