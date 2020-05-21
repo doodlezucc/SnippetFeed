@@ -60,51 +60,49 @@ class ImagePickButton extends FilePickButton {
       @required void Function(StatusFile) onUpdate})
       : super(key: key, file: file, text: text, onUpdate: onUpdate);
 
-  static const double previewSize = 40;
-  static const double insets = 10;
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(text),
-        Padding(
-          padding: const EdgeInsets.only(top: 0, bottom: insets + 5),
-          child: InkWell(
-            onTap: file.status == FileStatus.LOADING ? null : pickFile,
-            child: Container(
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: previewSize + insets,
-                    height: previewSize,
-                    padding: const EdgeInsets.only(right: insets),
-                    child: Image(
-                      image: file.file != null
-                          ? FileImage(file.file)
-                          : AssetImage("assets/testpattern.png"),
-                      gaplessPlayback: true,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Flexible(
-                    fit: FlexFit.loose,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 110,
+        height: 110,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Image(
+              image: file.file != null
+                  ? FileImage(file.file)
+                  : AssetImage("assets/testpattern.png"),
+              gaplessPlayback: true,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: file.status == FileStatus.LOADING ? null : pickFile,
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: Colors.black45,
+                  child: Center(
                     child: Text(
-                      file.file != null
-                          ? basename(file.file.path)
-                          : "Kein Bild ausgewählt",
-                      softWrap: false,
+                      text.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
