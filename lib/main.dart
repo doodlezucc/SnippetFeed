@@ -163,7 +163,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                     return false;
                                   },
                                   child: AlertDialog(
-                                    title: Text("Video wird erstellt..."),
                                     content: Center(
                                       heightFactor: 1.0,
                                       child: Column(
@@ -173,6 +172,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                                   ? "Cover wird erstellt..."
                                                   : "In Video konvertieren...") +
                                               " ${(progress * 100).round()}%"),
+                                          Container(height: 10),
                                           LinearProgressIndicator(
                                             value: progress,
                                           )
@@ -195,8 +195,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           background: back.file,
                           main: front.file,
                           frontSize: frontSize,
-                          outSize: 600,
-                          output: File(path.join(appDir.path, "$fileBase.jpg")),
+                          outSize: 1080,
+                          output: File(path.join(appDir.path, "$fileBase.tga")),
                           progressCallback: (v) {
                             print("Progress: $v");
                             progress = v;

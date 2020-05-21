@@ -46,9 +46,6 @@ Future<img.Image> createImage(
   print("drawing foreground...");
   img.drawImage(out, foreground,
       dstX: inset, dstY: inset, dstW: size, dstH: size);
-  progressCb(0.85);
-  print("smoothing...");
-  img.smooth(out, 0.8);
   progressCb(1.0);
   return out;
 }
@@ -57,8 +54,8 @@ Future<File> makeImage(
     {@required File main,
     @required File background,
     @required File output,
-    double frontSize = 0.8,
-    int outSize = 1080,
+    @required frontSize,
+    @required int outSize,
     void Function(double progress) progressCallback}) async {
   var i = await createImage(
       back: background,
@@ -66,7 +63,7 @@ Future<File> makeImage(
       frontM: frontSize,
       outSize: outSize,
       progressCb: progressCallback);
-  var bytes = img.encodePng(i);
+  var bytes = img.encodeTga(i);
   if (!await output.exists()) {
     await output.create();
   }
@@ -75,20 +72,21 @@ Future<File> makeImage(
   return output;
 }
 
-// combines an image and an audio file into a video running at 1 fps. cool.
+// combines an image and an audio file into a video. cool.
 Future<bool> makeVideo(String img, String audio, String output,
     void Function(int time) progressCb) async {
   print(img);
   print(audio);
   print(output);
-  const framerate = 1;
   List<String> arguments = [
-    "-r", "$framerate", // input framerate = 1
     "-loop", "1", // loop that image
+    //"-f", "image2",
+    "-r", "1", // input framerate
     "-i", "$img",
     "-i", "$audio",
-    //"-acodec", "copy", // use the original codec to preserve audio quality
-    "-r", "$framerate", // output framerate = 1
+    //"-c:v", "libx264",
+    //"-c:a", "copy", // use the original codec to preserve audio quality
+    //"-r", "1", // output framerate
     "-shortest", // plz don't use the endless loop of a single image to figure out the vid length, doofus.
     "-y", // overwrite
     "$output" // output file
@@ -103,7 +101,7 @@ Future<bool> makeVideo(String img, String audio, String output,
       double videoFps) {
     if (initialized) {
       progressCb(time);
-    } else {
+    } else if (time < 5000) {
       initialized = true;
     }
   });

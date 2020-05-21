@@ -19,7 +19,7 @@ allprojects {
 }
 
 ext {
-    flutterFFmpegPackage  = "https-lts"
+    flutterFFmpegPackage  = "min-lts"
 }
 
 rootProject.buildDir = '../build'
