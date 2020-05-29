@@ -113,7 +113,6 @@ class AudioController {
         }
         onUpdate();
       }, onDone: () {
-        print('LISTENER');
         _playing = false;
         onUpdate();
       });

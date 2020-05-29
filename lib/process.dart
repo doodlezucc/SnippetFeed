@@ -8,6 +8,8 @@ final flutterFFmpeg = FlutterFFmpeg();
 final flutterFFprobe = FlutterFFprobe();
 final flutterFFmpegConfig = FlutterFFmpegConfig();
 
+const String videoFormat = 'mp4';
+
 Future<int> retrieveDuration(String path) async {
   Map<dynamic, dynamic> info = await flutterFFprobe.getMediaInformation(path);
   int duration = info["duration"];
@@ -91,14 +93,18 @@ Future<bool> makeVideo(String img, String audio, String output,
   List<String> arguments = [
     "-loop", "1", // loop that image
     //"-f", "image2",
-    "-r", "1", // input framerate
+    "-r", "6", // input framerate
     "-i", "$img",
     "-i", "$audio",
-    //"-c:v", "libx264",
+    "-c:v", "libx264",
+    "-preset", "ultrafast",
+    "-pix_fmt", "yuv420p",
+    "-tune", "stillimage",
+    "-vsync", "passthrough",
     //"-c:a", "copy", // use the original codec to preserve audio quality
-    //"-r", "1", // output framerate
     "-shortest", // plz don't use the endless loop of a single image to figure out the vid length, doofus.
     "-y", // overwrite
+    //"-r", "12", // output framerate
     "$output" // output file
   ];
   bool initialized = false;
@@ -120,5 +126,6 @@ Future<bool> makeVideo(String img, String audio, String output,
   if (rc != 0 && File(output).existsSync()) {
     await File(output).delete();
   }
+  await flutterFFprobe.executeWithArguments([File(output).path]);
   return rc == 0;
 }

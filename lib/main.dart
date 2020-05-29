@@ -76,8 +76,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   void reloadFiles() {
-    filesSorted = List<File>.from(
-        appDir.listSync().where((entry) => entry.path.endsWith(".mp4")))
+    filesSorted = List<File>.from(appDir
+        .listSync()
+        .where((entry) => entry.path.endsWith(".$videoFormat")))
       ..sort((a, b) =>
           b.lastModifiedSync().millisecondsSinceEpoch -
           a.lastModifiedSync().millisecondsSinceEpoch);
@@ -252,8 +253,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 setInnerState(() {});
                               }).then((file) {
                             step = 1;
-                            makeVideo(file.path, audio.file.path,
-                                path.join(appDir.path, "$fileBase.mp4"), (p) {
+                            makeVideo(
+                                file.path,
+                                audio.file.path,
+                                path.join(
+                                    appDir.path, "$fileBase.$videoFormat"),
+                                (p) {
                               progress = math.min(
                                   1, p.toDouble() / durationInMs.toDouble());
                               setInnerState(() {});
