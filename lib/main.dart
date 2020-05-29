@@ -101,12 +101,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         max: 1.0,
         divisions: 50,
         label: "${(frontSize * 100).round()}%",
-        onChanged: (v) {
-          var value = (v * 100).roundToDouble() / 100;
-          setState(() {
-            frontSize = value;
-          });
-        });
+        onChanged: back.file == null
+            ? null
+            : (v) {
+                var value = (v * 100).roundToDouble() / 100;
+                setState(() {
+                  frontSize = value;
+                });
+              });
 
     return Scaffold(
         appBar: AppBar(

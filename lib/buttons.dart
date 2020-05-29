@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 
 class StatusFile {
   FileStatus status;
@@ -86,15 +85,17 @@ class ImagePickButton extends FilePickButton {
                 child: Container(
                   width: double.infinity,
                   height: double.infinity,
-                  color: Colors.black45,
+                  color: Colors.black26,
                   child: Center(
                     child: Text(
                       text.toUpperCase(),
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                      ),
+                          fontSize: 18,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(color: Colors.black38, blurRadius: 10)
+                          ]),
                     ),
                   ),
                 ),

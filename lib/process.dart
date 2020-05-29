@@ -27,13 +27,23 @@ Future<img.Image> createImage(
     @required void Function(double progress) progressCb}) async {
   print("reading front...");
   var frontBytes = await front.readAsBytes();
+
+  if (back == null) {
+    progressCb(0.4);
+    var out = _cropSquare(img.decodeImage(frontBytes), outSize);
+    progressCb(1.0);
+    return out;
+  }
+
   progressCb(0.1);
+
   print("reading back...");
   var backBytes = await back.readAsBytes();
   progressCb(0.2);
+
   print("preparing images...");
-  img.Image out = img.decodeImage(backBytes);
-  img.Image foreground = img.decodeImage(frontBytes);
+  var out = img.decodeImage(backBytes);
+  var foreground = img.decodeImage(frontBytes);
   progressCb(0.25);
 
   out = _cropSquare(out, outSize);
@@ -41,8 +51,8 @@ Future<img.Image> createImage(
   foreground = _cropSquare(foreground, outSize);
   progressCb(0.75);
 
-  int inset = (outSize * (0.5 - frontM * 0.5)).round();
-  int size = (outSize * frontM).round();
+  var inset = (outSize * (0.5 - frontM * 0.5)).round();
+  var size = (outSize * frontM).round();
   print("drawing foreground...");
   img.drawImage(out, foreground,
       dstX: inset, dstY: inset, dstW: size, dstH: size);

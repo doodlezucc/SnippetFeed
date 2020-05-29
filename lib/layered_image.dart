@@ -16,38 +16,41 @@ class LayeredImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var frontImage = Image(
+      image: front != null
+          ? FileImage(front)
+          : AssetImage("assets/testpattern.png"),
+      gaplessPlayback: true,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+    );
+
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
           decoration: BoxDecoration(
               boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black26)]),
-          child: Stack(
-            children: <Widget>[
-              Center(
-                  child: Image(
-                image: back != null
-                    ? FileImage(back)
-                    : AssetImage("assets/testpattern.png"),
-                gaplessPlayback: true,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-              )),
-              Transform.scale(
-                scale: frontSize,
-                child: Center(
-                    child: Image(
-                  image: front != null
-                      ? FileImage(front)
-                      : AssetImage("assets/testpattern.png"),
-                  gaplessPlayback: true,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
+          child: back == null
+              ? frontImage
+              : Stack(
+                  children: <Widget>[
+                    Center(
+                        child: Image(
+                      image: back != null
+                          ? FileImage(back)
+                          : AssetImage("assets/testpattern.png"),
+                      gaplessPlayback: true,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    )),
+                    Transform.scale(
+                      scale: frontSize,
+                      child: Center(child: frontImage),
+                    ),
+                  ],
                 )),
-              ),
-            ],
-          )),
     );
   }
 }
