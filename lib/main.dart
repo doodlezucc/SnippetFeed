@@ -42,6 +42,8 @@ class _MyHomePageState extends State<MyHomePage>
   List<File> filesSorted = [];
 
   AudioController ctrl;
+  ScrollController scroll = ScrollController();
+  bool didConvert = false;
 
   @override
   void initState() {
@@ -100,7 +102,8 @@ class _MyHomePageState extends State<MyHomePage>
           builder: (ctx, orientation) {
             var portrait = orientation == Orientation.portrait;
             return ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12).copyWith(bottom: 8),
+              controller: scroll,
               children: <Widget>[
                 Flex(
                   direction: portrait ? Axis.vertical : Axis.horizontal,
@@ -167,36 +170,70 @@ class _MyHomePageState extends State<MyHomePage>
                 Center(
                   child: ConvertToVideoButton(
                     conv: this,
-                    onDone: (file) {
+                    onDone: (file) async {
+                      didConvert = true;
                       reloadFiles();
+                      if (filesSorted.length == 1) {
+                        await Future.delayed(Duration(milliseconds: 200));
+                        scroll.animateTo(scroll.position.maxScrollExtent,
+                            duration: Duration(milliseconds: 500),
+                            curve: Curves.ease);
+                      }
                     },
                   ),
                 ),
+                if (filesSorted.length > 0) Divider(),
                 Column(
-                    children: filesSorted
-                        .map((f) => Container(
-                              child: Row(
-                                children: <Widget>[
-                                  Expanded(
-                                      child: Text(path
-                                          .basenameWithoutExtension(f.path))),
-                                  IconButton(
-                                    icon: Icon(Icons.share),
-                                    tooltip: "Video teilen",
-                                    onPressed: () => share(f),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.delete),
-                                    tooltip: "Löschen",
-                                    onPressed: () async {
-                                      await f.delete();
-                                      reloadFiles();
-                                    },
-                                  )
-                                ],
+                    children: filesSorted.map((f) {
+                  var isFirst = didConvert && f == filesSorted.first;
+
+                  return Material(
+                    shape: StadiumBorder(),
+                    clipBehavior: Clip.hardEdge,
+                    child: Ink(
+                      color: isFirst
+                          ? Theme.of(context).primaryColorLight
+                          : Colors.transparent,
+                      child: InkWell(
+                        splashFactory: InkRipple.splashFactory,
+                        splashColor: isFirst ? Colors.white54 : null,
+                        enableFeedback: true,
+                        onTap: () => print("preview me"),
+                        child: Container(
+                          padding: EdgeInsets.only(left: 12.0),
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                  child: Text(
+                                path.basenameWithoutExtension(f.path),
+                                softWrap: false,
+                                overflow: TextOverflow.ellipsis,
+                              )),
+                              IconButton(
+                                splashColor: Colors.white,
+                                highlightColor: Colors.white,
+                                icon: Icon(Icons.share),
+                                tooltip: "Video teilen",
+                                onPressed: () => share(f),
                               ),
-                            ))
-                        .toList())
+                              IconButton(
+                                icon: Icon(Icons.delete),
+                                tooltip: "Löschen",
+                                onPressed: () async {
+                                  if (isFirst) {
+                                    didConvert = false;
+                                  }
+                                  await f.delete();
+                                  reloadFiles();
+                                },
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList())
               ],
             );
           },
