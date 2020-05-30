@@ -58,15 +58,17 @@ class AudioPickButton extends FilePickButton {
     return FlatButton.icon(
       onPressed: pickFile,
       label: Flexible(
-        flex: 1,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              text,
-              overflow: TextOverflow.fade,
-              softWrap: false,
-              textAlign: TextAlign.center,
+            Flexible(
+              flex: 1,
+              child: Text(
+                text,
+                overflow: TextOverflow.fade,
+                softWrap: false,
+                textAlign: TextAlign.center,
+              ),
             ),
             if (file.status == FileStatus.LOADING) LoadingCircle()
           ],

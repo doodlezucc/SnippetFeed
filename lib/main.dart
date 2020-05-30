@@ -207,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage>
                                   child: Text(
                                 path.basenameWithoutExtension(f.path),
                                 softWrap: false,
-                                overflow: TextOverflow.ellipsis,
+                                overflow: TextOverflow.fade,
                               )),
                               IconButton(
                                 splashColor: Colors.white,
