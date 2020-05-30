@@ -1,7 +1,12 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
+
+import 'io.dart';
+import 'process.dart';
 
 class StatusFile {
   FileStatus status;
@@ -104,6 +109,130 @@ class ImagePickButton extends FilePickButton {
           ],
         ),
       ),
+    );
+  }
+}
+
+class ConvertToVideoButton extends StatelessWidget {
+  final ConvertOptions conv;
+  final void Function(File file) onDone;
+
+  const ConvertToVideoButton(
+      {Key key, @required this.conv, @required this.onDone})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return RaisedButton(
+      child: Text("In Video konvertieren"),
+      onPressed: (conv.audio.status != FileStatus.FINISHED ||
+              conv.front.status != FileStatus.FINISHED)
+          ? null
+          : () {
+              var innerContext;
+              void Function(void Function()) setInnerState = (bruv) {};
+              int step = 0;
+              var fileBase = basenameWithoutExtension(conv.audio.file.path);
+
+              double progress = 0;
+
+              var style = TextStyle(fontSize: 16);
+              const space = 16.0;
+
+              showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (c) => StatefulBuilder(builder: (ctx, setSt) {
+                        innerContext = ctx;
+                        setInnerState = setSt;
+                        return WillPopScope(
+                          onWillPop: () async {
+                            return false;
+                          },
+                          child: SimpleDialog(
+                            contentPadding: EdgeInsets.zero,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(space),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        step == 0
+                                            ? "Cover erstellen..."
+                                            : "In Video konvertieren...",
+                                        style: style,
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ),
+                                    Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        CircularProgressIndicator(
+                                            value: progress),
+                                        CloseButton(
+                                          onPressed: () {
+                                            flutterFFmpeg.cancel();
+                                          },
+                                        ),
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
+                        );
+                      }));
+
+              makeImage(
+                  conv: conv,
+                  outSize: 1080,
+                  output: File(join(appDir.path, "$fileBase.tga")),
+                  progressCallback: (v) {
+                    print("Progress: $v");
+                    progress = v;
+                    setInnerState(() {});
+                  }).then((file) {
+                step = 1;
+                makeVideo(file.path, conv.audio.file.path,
+                    join(appDir.path, "$fileBase.$videoFormat"), (p) {
+                  progress =
+                      min(1, p.toDouble() / conv.durationInMs.toDouble());
+                  setInnerState(() {});
+                }).then((file) {
+                  onDone(file);
+                  Navigator.of(innerContext, rootNavigator: true).pop();
+                  if (file != null) {
+                    showDialog(
+                      context: context,
+                      builder: (c) => SimpleDialog(
+                        //title: Text("Fertig!"),
+                        contentPadding: EdgeInsets.all(space),
+                        children: [
+                          Text(
+                            "Konvertierung erfolgreich!",
+                            style: style,
+                          ),
+                          Container(height: space),
+                          Center(
+                            child: FlatButton.icon(
+                              onPressed: () {
+                                share(file);
+                                Navigator.of(context, rootNavigator: true)
+                                    .pop();
+                              },
+                              icon: Icon(Icons.share),
+                              label: Text("Video teilen"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                });
+              });
+            },
     );
   }
 }

@@ -1,8 +1,11 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:image/image.dart' as img;
+
+import 'buttons.dart';
 
 final flutterFFmpeg = FlutterFFmpeg();
 final flutterFFprobe = FlutterFFprobe();
@@ -63,16 +66,14 @@ Future<img.Image> createImage(
 }
 
 Future<File> makeImage(
-    {@required File main,
-    @required File background,
+    {@required ConvertOptions conv,
     @required File output,
-    @required frontSize,
     @required int outSize,
     void Function(double progress) progressCallback}) async {
   var i = await createImage(
-      back: background,
-      front: main,
-      frontM: frontSize,
+      back: conv.back.file,
+      front: conv.front.file,
+      frontM: conv.frontSize,
       outSize: outSize,
       progressCb: progressCallback);
   var bytes = img.encodeTga(i);
@@ -85,7 +86,7 @@ Future<File> makeImage(
 }
 
 // combines an image and an audio file into a video. cool.
-Future<bool> makeVideo(String img, String audio, String output,
+Future<File> makeVideo(String img, String audio, String output,
     void Function(int time) progressCb) async {
   print(img);
   print(audio);
@@ -122,10 +123,25 @@ Future<bool> makeVideo(String img, String audio, String output,
     }
   });
   int rc = await flutterFFmpeg.executeWithArguments(arguments);
-  print("FFmpeg process exited with rc $rc");
-  if (rc != 0 && File(output).existsSync()) {
-    await File(output).delete();
+
+  var out = File(output);
+
+  if (rc != 0) {
+    if (out.existsSync()) {
+      await out.delete();
+    }
+    return null;
   }
-  await flutterFFprobe.executeWithArguments([File(output).path]);
-  return rc == 0;
+  await flutterFFprobe.executeWithArguments([out.path]);
+  return out;
+}
+
+mixin ConvertOptions {
+  StatusFile front = StatusFile(type: FileType.image);
+  StatusFile back = StatusFile(type: FileType.image);
+  StatusFile audio = StatusFile(type: FileType.audio);
+
+  double frontSize = 0.8;
+
+  int durationInMs;
 }
