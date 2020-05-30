@@ -22,6 +22,9 @@ class MyApp extends StatelessWidget {
           activeTickMarkColor: Colors.transparent,
           inactiveTickMarkColor: Colors.transparent,
         ),
+        buttonTheme: ButtonThemeData(
+          shape: StadiumBorder(),
+        ),
       ),
       home: MyHomePage(),
     );
@@ -141,32 +144,32 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
                 if (portrait) slider,
                 Divider(),
-                FilePickButton(
-                  text: "Audio auswählen",
-                  file: audio,
-                  onUpdate: (f) async {
-                    if (f.status == FileStatus.FINISHED) {
-                      ctrl = AudioController(audio.file);
-                      durationInMs = await retrieveDuration(f.file.path);
-                    }
-                    setState(() {});
-                  },
+                Center(
+                  child: AudioPickButton(
+                    text: audio.file == null
+                        ? "Audio auswählen".toUpperCase()
+                        : (audio.status == FileStatus.LOADING
+                            ? "Wird geladen..."
+                            : path.basename(audio.file.path)),
+                    file: audio,
+                    onUpdate: (f) async {
+                      if (f.status == FileStatus.FINISHED) {
+                        ctrl = AudioController(audio.file);
+                        durationInMs = await retrieveDuration(f.file.path);
+                      }
+                      setState(() {});
+                    },
+                  ),
                 ),
-                audio.status == FileStatus.FINISHED
-                    ? AudioItem(controller: ctrl)
-                    : Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Center(
-                          child: Text(audio.status == FileStatus.LOADING
-                              ? "Wird geladen..."
-                              : "Keine Datei ausgewählt"),
-                        ),
-                      ),
+                if (audio.status == FileStatus.FINISHED)
+                  AudioItem(controller: ctrl),
                 Divider(),
                 Center(
                   child: ConvertToVideoButton(
                     conv: this,
-                    onDone: (file) => reloadFiles(),
+                    onDone: (file) {
+                      reloadFiles();
+                    },
                   ),
                 ),
                 Column(
@@ -174,7 +177,9 @@ class _MyHomePageState extends State<MyHomePage>
                         .map((f) => Container(
                               child: Row(
                                 children: <Widget>[
-                                  Expanded(child: Text(path.basename(f.path))),
+                                  Expanded(
+                                      child: Text(path
+                                          .basenameWithoutExtension(f.path))),
                                   IconButton(
                                     icon: Icon(Icons.share),
                                     tooltip: "Video teilen",

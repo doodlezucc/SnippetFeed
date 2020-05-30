@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:vinsta/loading.dart';
 
 import 'io.dart';
 import 'process.dart';
@@ -18,7 +19,7 @@ class StatusFile {
 
 enum FileStatus { NONE, LOADING, FINISHED }
 
-class FilePickButton extends StatelessWidget {
+abstract class FilePickButton extends StatelessWidget {
   final StatusFile file;
   final void Function(StatusFile file) onUpdate;
   final String text;
@@ -29,18 +30,6 @@ class FilePickButton extends StatelessWidget {
       @required this.text,
       @required this.onUpdate})
       : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        RaisedButton(
-          child: Text(text),
-          onPressed: file.status == FileStatus.LOADING ? null : pickFile,
-        )
-      ],
-    );
-  }
 
   void pickFile() async {
     onUpdate(file..status = FileStatus.LOADING);
@@ -53,6 +42,38 @@ class FilePickButton extends StatelessWidget {
       onUpdate(file
         ..status = file.file == null ? FileStatus.NONE : FileStatus.FINISHED);
     }
+  }
+}
+
+class AudioPickButton extends FilePickButton {
+  const AudioPickButton(
+      {Key key,
+      @required StatusFile file,
+      @required String text,
+      @required void Function(StatusFile) onUpdate})
+      : super(key: key, file: file, text: text, onUpdate: onUpdate);
+
+  @override
+  Widget build(BuildContext context) {
+    return FlatButton.icon(
+      onPressed: pickFile,
+      label: Flexible(
+        flex: 1,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text,
+              overflow: TextOverflow.fade,
+              softWrap: false,
+              textAlign: TextAlign.center,
+            ),
+            if (file.status == FileStatus.LOADING) LoadingCircle()
+          ],
+        ),
+      ),
+      icon: Icon(Icons.audiotrack),
+    );
   }
 }
 
@@ -87,21 +108,25 @@ class ImagePickButton extends FilePickButton {
               color: Colors.transparent,
               child: InkWell(
                 onTap: file.status == FileStatus.LOADING ? null : pickFile,
+                splashFactory: InkRipple.splashFactory,
                 child: Container(
                   width: double.infinity,
                   height: double.infinity,
                   color: Colors.black26,
                   child: Center(
-                    child: Text(
-                      text.toUpperCase(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(color: Colors.black38, blurRadius: 10)
-                          ]),
-                    ),
+                    child: file.status == FileStatus.LOADING
+                        ? LoadingCircle(
+                            size: 50, color: Colors.white, strokeWidth: 5)
+                        : Text(
+                            text.toUpperCase(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(color: Colors.black38, blurRadius: 10)
+                                ]),
+                          ),
                   ),
                 ),
               ),
@@ -123,8 +148,9 @@ class ConvertToVideoButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RaisedButton(
-      child: Text("In Video konvertieren"),
+    return FlatButton.icon(
+      icon: Icon(Icons.movie),
+      label: Text("In Video konvertieren".toUpperCase()),
       onPressed: (conv.audio.status != FileStatus.FINISHED ||
               conv.front.status != FileStatus.FINISHED)
           ? null
