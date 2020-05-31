@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound_player.dart';
+import 'package:flutter_sound_lite/flutter_sound.dart';
 
 final FlutterSoundPlayer _flutterSound = FlutterSoundPlayer();
 
@@ -41,9 +41,8 @@ class _AudioItemState extends State<AudioItem> {
   Widget build(BuildContext context) {
     Duration d = ctrl.playing
         ? (_seekbarProgress == null
-            ? Duration(milliseconds: ctrl.currentPosition.toInt())
-            : Duration(
-                milliseconds: (ctrl.duration * _seekbarProgress).toInt()))
+            ? ctrl.currentPosition
+            : ctrl.duration * _seekbarProgress)
         : Duration.zero;
 
     return Row(
@@ -66,11 +65,15 @@ class _AudioItemState extends State<AudioItem> {
                   onChangeEnd: (v) {
                     ctrl.currentPosition = ctrl.duration * _seekbarProgress;
                     _seekbarProgress = null;
-                    flutterSound.seekToPlayer((ctrl.duration * v).toInt());
+                    flutterSound.seekToPlayer(ctrl.duration * v);
                     flutterSound.resumePlayer();
                   },
-                  value: min(1,
-                      _seekbarProgress ?? ctrl.currentPosition / ctrl.duration),
+                  value: min(
+                    1,
+                    _seekbarProgress ??
+                        ctrl.currentPosition.inMilliseconds /
+                            ctrl.duration.inMilliseconds,
+                  ),
                 )
               : Slider.adaptive(
                   onChanged: null,
@@ -88,8 +91,8 @@ class AudioController {
   final File file;
 
   void Function() onUpdate;
-  double currentPosition = 0;
-  double duration = 1;
+  Duration currentPosition = Duration.zero;
+  Duration duration = Duration(seconds: 1);
 
   AudioController(this.file);
 
@@ -103,14 +106,12 @@ class AudioController {
       if (_flutterSound.isPlaying) {
         await _flutterSound.stopPlayer();
       }
-      await _flutterSound.startPlayer(file.uri.toString());
+      await _flutterSound.startPlayer(fromURI: file.uri.toString());
       _playing = true;
 
-      _flutterSound.onPlayerStateChanged.listen((status) {
-        if (status != null) {
-          duration = status.duration;
-          currentPosition = status.currentPosition;
-        }
+      _flutterSound.onProgress.listen((disposition) {
+        duration = disposition.duration;
+        currentPosition = disposition.position;
         onUpdate();
       }, onDone: () {
         _playing = false;
