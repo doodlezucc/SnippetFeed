@@ -15,6 +15,10 @@ class StatusFile {
   FileType type;
 
   StatusFile({@required this.type, this.status = FileStatus.NONE, this.file});
+
+  void updateStatus() {
+    status = file == null ? FileStatus.NONE : FileStatus.FINISHED;
+  }
 }
 
 enum FileStatus { NONE, LOADING, FINISHED }
@@ -33,16 +37,25 @@ abstract class FilePickButton extends StatelessWidget {
 
   void pickFile() async {
     onUpdate(file..status = FileStatus.LOADING);
-    String path = await FilePicker.getFilePath(type: file.type);
-    if (path != null) {
-      onUpdate(file
-        ..file = File(path)
-        ..status = FileStatus.FINISHED);
-    } else {
-      onUpdate(file
-        ..status = file.file == null ? FileStatus.NONE : FileStatus.FINISHED);
+    String path;
+    try {
+      path = await FilePicker.getFilePath(type: file.type);
+
+      if (path != null) {
+        onUpdate(file
+          ..file = File(path)
+          ..status = FileStatus.FINISHED);
+      } else {
+        onUpdate(file..updateStatus());
+      }
+    } catch (e) {
+      onUpdate(file..updateStatus());
+      print(e);
     }
   }
+
+  void Function() get tryPickFile =>
+      file.status == FileStatus.LOADING ? null : pickFile;
 }
 
 class AudioPickButton extends FilePickButton {
@@ -56,7 +69,7 @@ class AudioPickButton extends FilePickButton {
   @override
   Widget build(BuildContext context) {
     return FlatButton.icon(
-      onPressed: pickFile,
+      onPressed: tryPickFile,
       label: Flexible(
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -109,7 +122,7 @@ class ImagePickButton extends FilePickButton {
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: file.status == FileStatus.LOADING ? null : pickFile,
+                onTap: tryPickFile,
                 splashFactory: InkRipple.splashFactory,
                 child: Container(
                   width: double.infinity,
