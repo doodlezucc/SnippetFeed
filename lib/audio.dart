@@ -1,18 +1,16 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_sound_lite/flutter_sound.dart';
 
-final FlutterSoundPlayer _flutterSound = FlutterSoundPlayer();
+AudioPlayer _player;
 
 class AudioItem extends StatefulWidget {
   final AudioController controller;
 
   static void maybeShutUp() {
-    if (_flutterSound.isPlaying) {
-      _flutterSound.stopPlayer();
-    }
+    _player?.stop();
   }
 
   const AudioItem({Key key, @required this.controller}) : super(key: key);
@@ -24,13 +22,23 @@ class AudioItem extends StatefulWidget {
 class _AudioItemState extends State<AudioItem> {
   double _seekbarProgress;
 
-  FlutterSoundPlayer get flutterSound => _flutterSound;
+  AudioPlayer get player => _player;
   AudioController get ctrl => widget.controller;
 
   @override
   void initState() {
     super.initState();
+    print("ON INIT");
     ctrl.onUpdate = () => setState(() {});
+  }
+
+  @override
+  void dispose() {
+    print("DISPOSE");
+    ctrl.onUpdate = () {
+      print("disposed update call. huh.");
+    };
+    super.dispose();
   }
 
   void _togglePlaying() async {
@@ -57,16 +65,18 @@ class _AudioItemState extends State<AudioItem> {
           child: ctrl.playing
               ? Slider.adaptive(
                   onChangeStart: (v) {
-                    flutterSound.pausePlayer();
+                    player.pause();
                   },
                   onChanged: (v) {
-                    _seekbarProgress = v;
+                    setState(() {
+                      _seekbarProgress = v;
+                    });
                   },
                   onChangeEnd: (v) {
                     ctrl.currentPosition = ctrl.duration * _seekbarProgress;
                     _seekbarProgress = null;
-                    flutterSound.seekToPlayer(ctrl.duration * v);
-                    flutterSound.resumePlayer();
+                    player.seek(ctrl.duration * v);
+                    player.resume();
                   },
                   value: min(
                     1,
@@ -94,29 +104,37 @@ class AudioController {
   Duration currentPosition = Duration.zero;
   Duration duration = Duration(seconds: 1);
 
-  AudioController(this.file);
+  AudioController(this.file) {
+    _player?.dispose();
+
+    _player = AudioPlayer()
+      ..onDurationChanged.listen((dur) {
+        duration = dur;
+      })
+      ..onAudioPositionChanged.listen((disposition) {
+        currentPosition = disposition;
+        onUpdate();
+      })
+      ..onPlayerStateChanged.listen((state) {
+        if (state == AudioPlayerState.COMPLETED ||
+            state == AudioPlayerState.STOPPED) {
+          _playing = false;
+          onUpdate();
+        }
+      });
+  }
 
   bool _playing = false;
   bool get playing => _playing;
   void setPlaying(bool playing) async {
     if (!playing) {
-      await _flutterSound.stopPlayer();
+      await _player.stop();
       _playing = false;
     } else {
-      if (_flutterSound.isPlaying) {
-        await _flutterSound.stopPlayer();
-      }
-      await _flutterSound.startPlayer(fromURI: file.uri.toString());
+      currentPosition = Duration.zero;
+      await _player.stop();
+      await _player.play(file.uri.toString(), isLocal: true);
       _playing = true;
-
-      _flutterSound.onProgress.listen((disposition) {
-        duration = disposition.duration;
-        currentPosition = disposition.position;
-        onUpdate();
-      }, onDone: () {
-        _playing = false;
-        onUpdate();
-      });
     }
 
     onUpdate();

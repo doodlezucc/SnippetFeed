@@ -30,7 +30,7 @@ dependencies:
   path:
   file_picker: ^1.4.0
   esys_flutter_share: ^1.0.2
-  flutter_sound_lite:
+  audioplayers: ^0.15.1
   image: ^2.1.4
 
 dev_dependencies:
