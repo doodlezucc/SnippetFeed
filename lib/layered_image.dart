@@ -37,9 +37,7 @@ class LayeredImage extends StatelessWidget {
                   children: <Widget>[
                     Center(
                         child: Image(
-                      image: back != null
-                          ? FileImage(back)
-                          : AssetImage("assets/testpattern.png"),
+                      image: FileImage(back),
                       gaplessPlayback: true,
                       fit: BoxFit.cover,
                       width: double.infinity,
