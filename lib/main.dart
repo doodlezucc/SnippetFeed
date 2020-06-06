@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path/path.dart' as path;
 import 'package:vinsta/generated/i18n.dart';
 
@@ -211,7 +212,7 @@ class _MyHomePageState extends State<MyHomePage>
                         splashFactory: InkRipple.splashFactory,
                         splashColor: isFirst ? Colors.white54 : null,
                         enableFeedback: true,
-                        onTap: () => print("preview me"),
+                        onTap: () => print(OpenFile.open(f.path)),
                         child: Container(
                           padding: EdgeInsets.only(left: 12.0),
                           child: Row(

@@ -32,6 +32,7 @@ dependencies:
   esys_flutter_share: ^1.0.2
   audioplayers: ^0.15.1
   image: ^2.1.4
+  open_file:
 
 dev_dependencies:
   flutter_test:
