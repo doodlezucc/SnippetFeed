@@ -28,54 +28,42 @@ Future<img.Image> createImage(
     {@required File front,
     @required File back,
     @required double frontM,
-    @required int outSize,
-    @required void Function(double progress) progressCb}) async {
+    @required int outSize}) async {
   print("reading front...");
   var frontBytes = await front.readAsBytes();
 
   if (back == null) {
-    progressCb(0.4);
     var out = _cropSquare(img.decodeImage(frontBytes), outSize);
-    progressCb(1.0);
     return out;
   }
 
-  progressCb(0.1);
-
   print("reading back...");
   var backBytes = await back.readAsBytes();
-  progressCb(0.2);
 
   print("preparing images...");
   var out = img.decodeImage(backBytes);
   var foreground = img.decodeImage(frontBytes);
-  progressCb(0.25);
 
   out = _cropSquare(out, outSize);
-  progressCb(0.5);
   foreground = _cropSquare(foreground, outSize);
-  progressCb(0.75);
 
   var inset = (outSize * (0.5 - frontM * 0.5)).round();
   var size = (outSize * frontM).round();
   print("drawing foreground...");
   img.drawImage(out, foreground,
       dstX: inset, dstY: inset, dstW: size, dstH: size);
-  progressCb(1.0);
   return out;
 }
 
 Future<File> makeImage(
     {@required ConvertOptions conv,
     @required File output,
-    @required int outSize,
-    void Function(double progress) progressCallback}) async {
+    @required int outSize}) async {
   var i = await createImage(
       back: conv.back.file,
       front: conv.front.file,
       frontM: conv.frontSize,
-      outSize: outSize,
-      progressCb: progressCallback);
+      outSize: outSize);
   var bytes = img.encodeTga(i);
   if (!await output.exists()) {
     await output.create();

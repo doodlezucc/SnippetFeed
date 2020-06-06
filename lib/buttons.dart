@@ -176,7 +176,7 @@ class ConvertToVideoButton extends StatelessWidget {
               int step = 0;
               var fileBase = basenameWithoutExtension(conv.audio.file.path);
 
-              double progress = 0;
+              double progress;
 
               var style = TextStyle(fontSize: 16);
               const space = 16.0;
@@ -229,14 +229,10 @@ class ConvertToVideoButton extends StatelessWidget {
                       }));
 
               makeImage(
-                  conv: conv,
-                  outSize: 1080,
-                  output: File(join(appDir.path, "$fileBase.tga")),
-                  progressCallback: (v) {
-                    print("Progress: $v");
-                    progress = v;
-                    setInnerState(() {});
-                  }).then((file) {
+                      conv: conv,
+                      outSize: 1080,
+                      output: File(join(appDir.path, "$fileBase.tga")))
+                  .then((file) {
                 step = 1;
                 makeVideo(file.path, conv.audio.file.path,
                     join(appDir.path, "$fileBase.$videoFormat"), (p) {

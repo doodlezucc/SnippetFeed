@@ -182,13 +182,15 @@ class _MyHomePageState extends State<MyHomePage>
                   child: ConvertToVideoButton(
                     conv: this,
                     onDone: (file) async {
-                      didConvert = true;
-                      reloadFiles();
-                      if (filesSorted.length == 1) {
-                        await Future.delayed(Duration(milliseconds: 200));
-                        scroll.animateTo(scroll.position.maxScrollExtent,
-                            duration: Duration(milliseconds: 500),
-                            curve: Curves.ease);
+                      if (file != null) {
+                        didConvert = true;
+                        reloadFiles();
+                        if (filesSorted.length == 1) {
+                          await Future.delayed(Duration(milliseconds: 200));
+                          scroll.animateTo(scroll.position.maxScrollExtent,
+                              duration: Duration(milliseconds: 500),
+                              curve: Curves.ease);
+                        }
                       }
                     },
                   ),
