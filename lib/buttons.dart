@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:vinsta/loading.dart';
 
+import 'generated/i18n.dart';
 import 'io.dart';
 import 'process.dart';
 
@@ -165,7 +166,7 @@ class ConvertToVideoButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return FlatButton.icon(
       icon: Icon(Icons.movie),
-      label: Text("In Video konvertieren".toUpperCase()),
+      label: Text(I18n.of(context).convert.toUpperCase()),
       onPressed: (conv.audio.status != FileStatus.FINISHED ||
               conv.front.status != FileStatus.FINISHED)
           ? null
@@ -200,8 +201,9 @@ class ConvertToVideoButton extends StatelessWidget {
                                     Expanded(
                                       child: Text(
                                         step == 0
-                                            ? "Cover erstellen..."
-                                            : "In Video konvertieren...",
+                                            ? I18n.of(context).creatingCover
+                                            : I18n.of(context)
+                                                .convertingToVideo,
                                         style: style,
                                         textAlign: TextAlign.left,
                                       ),
@@ -248,11 +250,10 @@ class ConvertToVideoButton extends StatelessWidget {
                     showDialog(
                       context: context,
                       builder: (c) => SimpleDialog(
-                        //title: Text("Fertig!"),
                         contentPadding: EdgeInsets.all(space),
                         children: [
                           Text(
-                            "Konvertierung erfolgreich!",
+                            I18n.of(context).conversionSuccess,
                             style: style,
                           ),
                           Container(height: space),
@@ -264,7 +265,7 @@ class ConvertToVideoButton extends StatelessWidget {
                                     .pop();
                               },
                               icon: Icon(Icons.share),
-                              label: Text("Video teilen"),
+                              label: Text(I18n.of(context).shareVideo),
                             ),
                           ),
                         ],

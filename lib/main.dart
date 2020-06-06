@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:path/path.dart' as path;
+import 'package:vinsta/generated/i18n.dart';
 
 import 'audio.dart';
 import 'io.dart';
@@ -14,8 +16,17 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final i18n = I18n.delegate;
     return MaterialApp(
       title: "vinsta",
+      localizationsDelegates: [
+        i18n,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: i18n.supportedLocales,
+      localeResolutionCallback: i18n.resolution(fallback: Locale("en", "US")),
       theme: ThemeData(
         primarySwatch: Colors.brown,
         sliderTheme: SliderThemeData(
@@ -119,12 +130,12 @@ class _MyHomePageState extends State<MyHomePage>
                             children: [
                               Expanded(child: Container()),
                               ImagePickButton(
-                                  text: "Vorder-Grund",
+                                  text: I18n.of(context).front,
                                   file: front,
                                   onUpdate: update),
                               Expanded(child: Container(width: 16)),
                               ImagePickButton(
-                                  text: "Hinter-Grund",
+                                  text: I18n.of(context).back,
                                   file: back,
                                   onUpdate: update),
                               Expanded(child: Container()),
@@ -150,9 +161,9 @@ class _MyHomePageState extends State<MyHomePage>
                 Center(
                   child: AudioPickButton(
                     text: audio.file == null
-                        ? "Audio auswählen".toUpperCase()
+                        ? I18n.of(context).selectAudio.toUpperCase()
                         : (audio.status == FileStatus.LOADING
-                            ? "Wird geladen..."
+                            ? I18n.of(context).loading
                             : path.basename(audio.file.path)),
                     file: audio,
                     onUpdate: (f) async {
@@ -213,12 +224,12 @@ class _MyHomePageState extends State<MyHomePage>
                                 splashColor: Colors.white,
                                 highlightColor: Colors.white,
                                 icon: Icon(Icons.share),
-                                tooltip: "Video teilen",
+                                tooltip: I18n.of(context).shareVideo,
                                 onPressed: () => share(f),
                               ),
                               IconButton(
                                 icon: Icon(Icons.delete),
-                                tooltip: "Löschen",
+                                tooltip: I18n.of(context).delete,
                                 onPressed: () async {
                                   if (isFirst) {
                                     didConvert = false;

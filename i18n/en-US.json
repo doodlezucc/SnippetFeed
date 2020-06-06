@@ -1,0 +1,12 @@
+{
+	"front": "Front",
+	"back": "Back",
+	"selectAudio": "Select Audio",
+	"loading": "Loading...",
+	"shareVideo": "Share Video",
+	"delete": "Delete",
+	"convert": "Convert to Video",
+	"creatingCover": "Creating cover...",
+	"convertingToVideo": "Converting To video...",
+	"conversionSuccess": "Conversion successful!"
+}

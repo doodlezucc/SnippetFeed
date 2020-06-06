@@ -1,0 +1,12 @@
+{
+	"front": "Vorder-Grund",
+	"back": "Hinter-Grund",
+	"selectAudio": "Audio auswählen",
+	"loading": "Wird geladen...",
+	"shareVideo": "Video teilen",
+	"delete": "Löschen",
+	"convert": "In Video konvertieren",
+	"creatingCover": "Cover erstellen...",
+	"convertingToVideo": "In Video konvertieren...",
+	"conversionSuccess": "Konvertierung erfolgreich!"
+}
