@@ -212,7 +212,7 @@ class _MyHomePageState extends State<MyHomePage>
                         splashFactory: InkRipple.splashFactory,
                         splashColor: isFirst ? Colors.white54 : null,
                         enableFeedback: true,
-                        onTap: () => print(OpenFile.open(f.path)),
+                        onTap: () => OpenFile.open(f.path),
                         child: Container(
                           padding: EdgeInsets.only(left: 12.0),
                           child: Row(

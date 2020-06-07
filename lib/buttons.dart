@@ -30,10 +30,7 @@ class AudioStatusFile extends StatusFile {
   Future<File> pickFile() async {
     return await FilePicker.getFile(
       type: FileType.custom,
-      allowedExtensions: [
-        "mp3",
-        "wav",
-      ],
+      allowedExtensions: ["mp3", "wav"],
     );
   }
 }
