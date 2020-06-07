@@ -29,7 +29,9 @@ dependencies:
   path_provider:
   path:
   file_picker: ^1.10.0
-  esys_flutter_share: ^1.0.2
+  esys_flutter_share:
+    git:
+      url: https://github.com/aeyrium/esys-flutter-share
   audioplayers: ^0.15.1
   image: ^2.1.4
   open_file:
