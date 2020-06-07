@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -28,13 +29,15 @@ class _AudioItemState extends State<AudioItem> {
   @override
   void initState() {
     super.initState();
-    print("ON INIT");
-    ctrl.onUpdate = () => setState(() {});
+    // start listening to audio controller updates
+    // (async, so previous state of AudioItem may dispose)
+    Timer.run(() {
+      ctrl.onUpdate = () => setState(() {});
+    });
   }
 
   @override
   void dispose() {
-    print("DISPOSE");
     ctrl.onUpdate = () {
       print("disposed update call. huh.");
     };

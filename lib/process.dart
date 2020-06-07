@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:image/image.dart' as img;
@@ -125,9 +124,9 @@ Future<File> makeVideo(String img, String audio, String output,
 }
 
 mixin ConvertOptions {
-  StatusFile front = StatusFile(type: FileType.image);
-  StatusFile back = StatusFile(type: FileType.image);
-  StatusFile audio = StatusFile(type: FileType.audio);
+  StatusFile front = StatusFile();
+  StatusFile back = StatusFile();
+  AudioStatusFile audio = AudioStatusFile();
 
   double frontSize = 0.8;
 

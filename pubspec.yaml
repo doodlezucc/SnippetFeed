@@ -28,7 +28,7 @@ dependencies:
   flutter_ffmpeg: ^0.2.10
   path_provider:
   path:
-  file_picker: ^1.4.0
+  file_picker: ^1.10.0
   esys_flutter_share: ^1.0.2
   audioplayers: ^0.15.1
   image: ^2.1.4

@@ -11,14 +11,30 @@ import 'io.dart';
 import 'process.dart';
 
 class StatusFile {
-  FileStatus status;
+  FileStatus status = FileStatus.NONE;
   File file;
-  FileType type;
 
-  StatusFile({@required this.type, this.status = FileStatus.NONE, this.file});
+  StatusFile();
 
   void updateStatus() {
     status = file == null ? FileStatus.NONE : FileStatus.FINISHED;
+  }
+
+  Future<File> pickFile() async {
+    return await FilePicker.getFile(type: FileType.image);
+  }
+}
+
+class AudioStatusFile extends StatusFile {
+  @override
+  Future<File> pickFile() async {
+    return await FilePicker.getFile(
+      type: FileType.custom,
+      allowedExtensions: [
+        "mp3",
+        "wav",
+      ],
+    );
   }
 }
 
@@ -38,13 +54,13 @@ abstract class FilePickButton extends StatelessWidget {
 
   void pickFile() async {
     onUpdate(file..status = FileStatus.LOADING);
-    String path;
+    File picked;
     try {
-      path = await FilePicker.getFilePath(type: file.type);
+      picked = await file.pickFile();
 
-      if (path != null) {
+      if (picked != null) {
         onUpdate(file
-          ..file = File(path)
+          ..file = picked
           ..status = FileStatus.FINISHED);
       } else {
         onUpdate(file..updateStatus());
