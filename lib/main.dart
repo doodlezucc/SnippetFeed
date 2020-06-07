@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path/path.dart' as path;
-import 'package:vinsta/generated/i18n.dart';
 
 import 'audio.dart';
 import 'io.dart';
 import 'process.dart';
 import 'buttons.dart';
 import 'layered_image.dart';
+import 'generated/i18n.dart';
 
 void main() => runApp(MyApp());
 
@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = I18n.delegate;
     return MaterialApp(
-      title: "vinsta",
+      title: "Snippet Feed",
       localizationsDelegates: [
         i18n,
         GlobalMaterialLocalizations.delegate,
@@ -108,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage>
 
     return Scaffold(
         appBar: AppBar(
-          title: Text("vinsta"),
+          title: Text("Snippet Feed"),
         ),
         body: OrientationBuilder(
           builder: (ctx, orientation) {

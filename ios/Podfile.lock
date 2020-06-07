@@ -1,4 +1,6 @@
 PODS:
+  - audioplayers (0.0.1):
+    - Flutter
   - DKImagePickerController/Core (4.3.1):
     - DKImagePickerController/ImageDataManager
     - DKImagePickerController/Resource
@@ -42,9 +44,9 @@ PODS:
     - mobile-ffmpeg-min (= 4.3.1.LTS)
   - flutter_plugin_android_lifecycle (0.0.1):
     - Flutter
-  - flutter_sound_lite (0.0.1):
-    - Flutter
   - mobile-ffmpeg-min (4.3.1.LTS)
+  - open_file (0.0.1):
+    - Flutter
   - path_provider (0.0.1):
     - Flutter
   - path_provider_macos (0.0.1):
@@ -57,12 +59,13 @@ PODS:
     - SDWebImage/Core (~> 5.6)
 
 DEPENDENCIES:
+  - audioplayers (from `.symlinks/plugins/audioplayers/ios`)
   - esys_flutter_share (from `.symlinks/plugins/esys_flutter_share/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - flutter_ffmpeg/min-lts (from `.symlinks/plugins/flutter_ffmpeg/ios`)
   - flutter_plugin_android_lifecycle (from `.symlinks/plugins/flutter_plugin_android_lifecycle/ios`)
-  - flutter_sound_lite (from `.symlinks/plugins/flutter_sound_lite/ios`)
+  - open_file (from `.symlinks/plugins/open_file/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
   - path_provider_macos (from `.symlinks/plugins/path_provider_macos/ios`)
 
@@ -76,6 +79,8 @@ SPEC REPOS:
     - SDWebImageFLPlugin
 
 EXTERNAL SOURCES:
+  audioplayers:
+    :path: ".symlinks/plugins/audioplayers/ios"
   esys_flutter_share:
     :path: ".symlinks/plugins/esys_flutter_share/ios"
   file_picker:
@@ -86,14 +91,15 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_ffmpeg/ios"
   flutter_plugin_android_lifecycle:
     :path: ".symlinks/plugins/flutter_plugin_android_lifecycle/ios"
-  flutter_sound_lite:
-    :path: ".symlinks/plugins/flutter_sound_lite/ios"
+  open_file:
+    :path: ".symlinks/plugins/open_file/ios"
   path_provider:
     :path: ".symlinks/plugins/path_provider/ios"
   path_provider_macos:
     :path: ".symlinks/plugins/path_provider_macos/ios"
 
 SPEC CHECKSUMS:
+  audioplayers: 84f968cea3f2deab00ec4f8ff53358b3c0b3992c
   DKImagePickerController: f3d397887f38b98276a506b02ed9c167425f7cf3
   DKPhotoGallery: e880aef16c108333240e1e7327896f2ea380f4f0
   esys_flutter_share: 403498dab005b36ce1f8d7aff377e81f0621b0b4
@@ -102,8 +108,8 @@ SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
   flutter_ffmpeg: cf0a6941ef67e88248c998cc3e34f8acb0b4e454
   flutter_plugin_android_lifecycle: dc0b544e129eebb77a6bfb1239d4d1c673a60a35
-  flutter_sound_lite: ecee5ce6a88ed5644973fcd91da583464387ede2
   mobile-ffmpeg-min: d5d22dcef5c8ec56f771258f1f5be245d914f193
+  open_file: 02eb5cb6b21264bd3a696876f5afbfb7ca4f4b7d
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
   path_provider_macos: f760a3c5b04357c380e2fddb6f9db6f3015897e0
   SDWebImage: 84000f962cbfa70c07f19d2234cbfcf5d779b5dc
