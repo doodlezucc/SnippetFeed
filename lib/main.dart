@@ -89,6 +89,47 @@ class _MyHomePageState extends State<MyHomePage>
 
   void update(StatusFile file) => setState(() {});
 
+  Future<bool> confirmDelete(File file) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => ButtonTheme(
+        minWidth: 16,
+        padding: EdgeInsets.all(12),
+        shape: StadiumBorder(),
+        child: SimpleDialog(
+          contentPadding: EdgeInsets.only(right: 4),
+          children: [
+            Container(
+              padding: EdgeInsets.only(left: 12, top: 12, right: 12),
+              child: Text(I18n.of(context).confirmDelete(
+                  '"' + path.basenameWithoutExtension(file.path) + '"')),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FlatButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop(true);
+                  },
+                  child: Text(I18n.of(context).delete,
+                      style: TextStyle(
+                        color: Colors.red,
+                      )),
+                ),
+                FlatButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop(false);
+                  },
+                  child: Text(I18n.of(context).cancel),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var slider = Slider.adaptive(
@@ -236,11 +277,14 @@ class _MyHomePageState extends State<MyHomePage>
                                 icon: Icon(Icons.delete),
                                 tooltip: I18n.of(context).delete,
                                 onPressed: () async {
-                                  if (isFirst) {
-                                    didConvert = false;
+                                  var doDelete = await confirmDelete(f);
+                                  if (doDelete ?? false) {
+                                    if (isFirst) {
+                                      didConvert = false;
+                                    }
+                                    await f.delete();
+                                    reloadFiles();
                                   }
-                                  await f.delete();
-                                  reloadFiles();
                                 },
                               )
                             ],

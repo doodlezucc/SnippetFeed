@@ -226,7 +226,9 @@ class ConvertToVideoButton extends StatelessWidget {
                                       children: [
                                         CircularProgressIndicator(
                                             value: progress),
-                                        CloseButton(
+                                        IconButton(
+                                          icon: Icon(Icons.close),
+                                          tooltip: I18n.of(context).cancel,
                                           onPressed: () {
                                             flutterFFmpeg.cancel();
                                           },

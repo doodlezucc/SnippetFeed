@@ -48,10 +48,14 @@ class I18n implements WidgetsLocalizations {
   String get convert => "Convert to Video";
   /// "Creating cover..."
   String get creatingCover => "Creating cover...";
-  /// "Converting To video..."
-  String get convertingToVideo => "Converting To video...";
+  /// "Converting to video..."
+  String get convertingToVideo => "Converting to video...";
   /// "Conversion successful!"
   String get conversionSuccess => "Conversion successful!";
+  /// "Do you really want to delete the conversion ${file}?"
+  String confirmDelete(String file) => "Do you really want to delete the conversion ${file}?";
+  /// "Cancel"
+  String get cancel => "Cancel";
 }
 
 class _I18n_en_US extends I18n {
@@ -94,6 +98,12 @@ class _I18n_de_DE extends I18n {
   /// "Konvertierung erfolgreich!"
   @override
   String get conversionSuccess => "Konvertierung erfolgreich!";
+  /// "Konvertierung ${file} wirklich löschen?"
+  @override
+  String confirmDelete(String file) => "Konvertierung ${file} wirklich löschen?";
+  /// "Abbrechen"
+  @override
+  String get cancel => "Abbrechen";
 
   @override
   TextDirection get textDirection => TextDirection.ltr;

@@ -8,5 +8,7 @@
 	"convert": "In Video konvertieren",
 	"creatingCover": "Cover erstellen...",
 	"convertingToVideo": "In Video konvertieren...",
-	"conversionSuccess": "Konvertierung erfolgreich!"
+	"conversionSuccess": "Konvertierung erfolgreich!",
+	"confirmDelete": "Konvertierung {file} wirklich löschen?",
+	"cancel": "Abbrechen"
 }

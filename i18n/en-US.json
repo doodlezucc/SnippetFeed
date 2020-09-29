@@ -7,6 +7,8 @@
 	"delete": "Delete",
 	"convert": "Convert to Video",
 	"creatingCover": "Creating cover...",
-	"convertingToVideo": "Converting To video...",
-	"conversionSuccess": "Conversion successful!"
+	"convertingToVideo": "Converting to video...",
+	"conversionSuccess": "Conversion successful!",
+	"confirmDelete": "Do you really want to delete the conversion {file}?",
+	"cancel": "Cancel"
 }
