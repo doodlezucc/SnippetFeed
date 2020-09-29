@@ -214,7 +214,7 @@ class _MyHomePageState extends State<MyHomePage>
                         enableFeedback: true,
                         onTap: () => OpenFile.open(f.path),
                         child: Container(
-                          padding: EdgeInsets.only(left: 12.0),
+                          padding: EdgeInsets.only(left: 16.0),
                           child: Row(
                             children: <Widget>[
                               Expanded(
@@ -231,6 +231,8 @@ class _MyHomePageState extends State<MyHomePage>
                                 onPressed: () => share(f),
                               ),
                               IconButton(
+                                splashColor: Colors.red[200],
+                                highlightColor: Colors.red[200],
                                 icon: Icon(Icons.delete),
                                 tooltip: I18n.of(context).delete,
                                 onPressed: () async {
