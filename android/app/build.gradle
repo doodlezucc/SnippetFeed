@@ -37,7 +37,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "doodlezucc.snippetfeed"
+        applicationId "com.doodlezucc.snippetfeed"
         minSdkVersion 16
         targetSdkVersion 28
         versionCode flutterVersionCode.toInteger()

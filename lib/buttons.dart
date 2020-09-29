@@ -4,10 +4,10 @@ import 'dart:math';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
-import 'package:vinsta/loading.dart';
 
 import 'generated/i18n.dart';
 import 'io.dart';
+import 'loading.dart';
 import 'process.dart';
 
 class StatusFile {

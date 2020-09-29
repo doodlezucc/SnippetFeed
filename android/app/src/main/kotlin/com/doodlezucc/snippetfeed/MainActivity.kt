@@ -1,4 +1,4 @@
-package doodlezucc.snippetfeed.vinsta
+package com.doodlezucc.snippetfeed
 
 import io.flutter.embedding.android.FlutterActivity
 
