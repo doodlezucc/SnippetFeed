@@ -184,7 +184,6 @@ class _ConvertToVideoButtonState extends State<ConvertToVideoButton> {
 
   @override
   Widget build(BuildContext context) {
-    print(isConverting);
     return FlatButton.icon(
       icon: Icon(Icons.movie),
       label: Text(I18n.of(context).convert.toUpperCase()),
