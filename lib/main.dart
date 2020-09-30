@@ -265,8 +265,10 @@ class _MyHomePageState extends State<MyHomePage>
                                 overflow: TextOverflow.fade,
                               )),
                               IconButton(
-                                splashColor: Colors.white,
-                                highlightColor: Colors.white,
+                                splashColor:
+                                    isFirst ? Colors.white : Colors.grey,
+                                highlightColor:
+                                    isFirst ? Colors.white : Colors.grey,
                                 icon: Icon(Icons.share),
                                 tooltip: I18n.of(context).shareVideo,
                                 onPressed: () => share(f),
