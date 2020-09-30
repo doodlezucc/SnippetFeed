@@ -167,7 +167,7 @@ class ImagePickButton extends FilePickButton {
   }
 }
 
-class ConvertToVideoButton extends StatelessWidget {
+class ConvertToVideoButton extends StatefulWidget {
   final ConvertOptions conv;
   final void Function(File file) onDone;
 
@@ -176,18 +176,31 @@ class ConvertToVideoButton extends StatelessWidget {
       : super(key: key);
 
   @override
+  _ConvertToVideoButtonState createState() => _ConvertToVideoButtonState();
+}
+
+class _ConvertToVideoButtonState extends State<ConvertToVideoButton> {
+  bool isConverting = false;
+
+  @override
   Widget build(BuildContext context) {
+    print(isConverting);
     return FlatButton.icon(
       icon: Icon(Icons.movie),
       label: Text(I18n.of(context).convert.toUpperCase()),
-      onPressed: (conv.audio.status != FileStatus.FINISHED ||
-              conv.front.status != FileStatus.FINISHED)
+      onPressed: isConverting ||
+              widget.conv.audio.status != FileStatus.FINISHED ||
+              widget.conv.front.status != FileStatus.FINISHED
           ? null
           : () {
+              setState(() {
+                isConverting = true;
+              });
               var innerContext;
               void Function(void Function()) setInnerState = (bruv) {};
               int step = 0;
-              var fileBase = basenameWithoutExtension(conv.audio.file.path);
+              var fileBase =
+                  basenameWithoutExtension(widget.conv.audio.file.path);
 
               double progress;
 
@@ -244,18 +257,21 @@ class ConvertToVideoButton extends StatelessWidget {
                       }));
 
               makeImage(
-                      conv: conv,
+                      conv: widget.conv,
                       outSize: 1080,
                       output: File(join(appDir.path, "$fileBase.tga")))
                   .then((file) {
                 step = 1;
-                makeVideo(file.path, conv.audio.file.path,
+                makeVideo(file.path, widget.conv.audio.file.path,
                     join(appDir.path, "$fileBase.$videoFormat"), (p) {
-                  progress =
-                      min(1, p.toDouble() / conv.durationInMs.toDouble());
+                  progress = min(
+                      1, p.toDouble() / widget.conv.durationInMs.toDouble());
                   setInnerState(() {});
                 }).then((file) {
-                  onDone(file);
+                  setState(() {
+                    isConverting = false;
+                  });
+                  widget.onDone(file);
                   Navigator.of(innerContext, rootNavigator: true).pop();
                   if (file != null) {
                     showDialog(
